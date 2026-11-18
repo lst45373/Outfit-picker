@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+<title>오늘의 코디 고르기</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="오늘의 코디">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  /* 운동 앱(FF Growth)과 같은 슬레이트 + 블루 톤. 휴대폰 테마 따라 밝게/어둡게.
+     레이아웃: 폰 폭(최대 448px) 한 줄 앱. 상단 고정 헤더(제목+카테고리 탭) → 어두운 요약 카드 → 카테고리 카드 → 하단 고정 바 */
+  --bg:#f8fafc;          /* slate-50 */
+  --card:#ffffff;
+  --soft:#f8fafc;
+  --line:#f1f5f9;        /* slate-100 */
+  --line2:#e2e8f0;       /* slate-200 */
+  --ink:#1e293b;         /* slate-800 */
+  --ink-strong:#0f172a;  /* slate-900 */
+  --muted:#64748b;       /* slate-500 */
+  --faint:#94a3b8;       /* slate-400 */
+  --blue:#2563eb;        /* blue-600 */
+  --blue-soft:#eff6ff;   /* blue-50 */
+  --green:#16a34a;       /* green-600 */
+  --green-soft:#f0fdf4;
+  --amber:#b45309;
+  --amber-soft:#fffbeb;
+  --header-bg:rgba(255,255,255,.92);
+  --seg:#f1f5f9;
+  --seg-on:#ffffff;
+  --hero-a:#0f172a;--hero-b:#1e293b;--hero-line:transparent;
+  --rec-line:#86efac;
+  --amber-line:#fde68a;
+  --blue-line:#dbeafe;
+  --tip-ink:#334155;
+  --bar:#0f172a;--bar-line:transparent;
+  --save-shadow:0 10px 15px -3px rgba(191,219,254,.9);
+  --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+/* 휴대폰이 다크 모드면 어둡게 (운동 앱 하단 타이머·PULL 카드의 slate-900 톤 기준) */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#020617;--card:#0f172a;--soft:#1e293b;--line:#1e293b;--line2:#334155;
+    --ink:#e2e8f0;--ink-strong:#f8fafc;--muted:#94a3b8;--faint:#7c8aa0;
+    --blue:#3b82f6;--blue-soft:rgba(59,130,246,.14);--green:#4ade80;--green-soft:rgba(34,197,94,.13);
+    --amber:#fbbf24;--amber-soft:rgba(245,158,11,.12);
+    --header-bg:rgba(15,23,42,.88);--seg:#020617;--seg-on:#1e293b;
+    --hero-a:#1e293b;--hero-b:#273449;--hero-line:#334155;
+    --rec-line:rgba(74,222,128,.45);--amber-line:rgba(251,191,36,.3);--blue-line:rgba(59,130,246,.3);--tip-ink:#cbd5e1;
+    --bar:#1e293b;--bar-line:#334155;--save-shadow:none;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#020617;--card:#0f172a;--soft:#1e293b;--line:#1e293b;--line2:#334155;
+  --ink:#e2e8f0;--ink-strong:#f8fafc;--muted:#94a3b8;--faint:#7c8aa0;
+  --blue:#3b82f6;--blue-soft:rgba(59,130,246,.14);--green:#4ade80;--green-soft:rgba(34,197,94,.13);
+  --amber:#fbbf24;--amber-soft:rgba(245,158,11,.12);
+  --header-bg:rgba(15,23,42,.88);--seg:#020617;--seg-on:#1e293b;
+  --hero-a:#1e293b;--hero-b:#273449;--hero-line:#334155;
+  --rec-line:rgba(74,222,128,.45);--amber-line:rgba(251,191,36,.3);--blue-line:rgba(59,130,246,.3);--tip-ink:#cbd5e1;
+  --bar:#1e293b;--bar-line:#334155;--save-shadow:none;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.app{max-width:448px;margin:0 auto;min-height:100%;background:var(--card);position:relative;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+@media (min-width:640px){.app{margin:16px auto;border-radius:16px;box-shadow:0 20px 25px -5px rgba(15,23,42,.08),0 8px 10px -6px rgba(15,23,42,.06);overflow:hidden}}
+
+header{position:sticky;top:0;z-index:30;background:var(--header-bg);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+.title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
+h1{margin:0;font-size:18px;font-weight:700;color:var(--ink-strong);letter-spacing:-.01em}
+h1 span{color:var(--blue)}
+.sub{margin:0;font-size:10px;color:var(--faint);font-weight:500}
+.hbtn{font-size:12px;color:var(--faint);border:1px solid var(--line2);background:var(--card);border-radius:6px;padding:4px 8px}
+.hbtn:hover{color:var(--blue)}
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--seg);padding:4px;border-radius:10px;box-shadow:inset 0 1px 2px rgba(15,23,42,.06)}
+.tab{border:0;background:transparent;border-radius:7px;padding:6px 0;font-size:11px;font-weight:700;color:var(--faint);white-space:nowrap}
+.tab.done{background:var(--seg-on);color:var(--blue);box-shadow:0 1px 2px rgba(15,23,42,.08),0 0 0 1px rgba(0,0,0,.04)}
+
+main{padding:12px;display:flex;flex-direction:column;gap:16px}
+.hero{background:linear-gradient(135deg,var(--hero-a),var(--hero-b));border:1px solid var(--hero-line);color:#fff;border-radius:16px;padding:18px;box-shadow:0 10px 15px -3px rgba(15,23,42,.2);position:relative;overflow:hidden}
+.hero-top{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1)}
+.pill.ok{background:rgba(34,197,94,.8);border-color:transparent}
+.pill.warn{background:rgba(245,158,11,.85);border-color:transparent}
+.hero h2{margin:0 0 8px;font-size:20px;font-weight:700}
+.slots{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.slot{display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(255,255,255,.08)}
+.slot .k{font-size:11px;color:#94a3b8;font-weight:600}
+.slot .v{font-size:14px;font-weight:600;display:flex;gap:8px;align-items:center;min-width:0}
+.slot .v .t{overflow-wrap:anywhere}
+.slot .v.empty{color:#64748b;font-weight:500}
+.hero .dot{border-color:rgba(255,255,255,.35)}
+.hero .thumb{border-color:rgba(255,255,255,.2)}
+
+.note-box{list-style:none;margin:0;padding:12px 14px;border-radius:12px;font-size:12.5px;display:flex;flex-direction:column;gap:4px}
+.problems{background:var(--amber-soft);color:var(--amber);border:1px solid var(--amber-line)}
+.problems li::before{content:"⚠ ";}
+.tips{background:var(--blue-soft);color:var(--tip-ink);border:1px solid var(--blue-line)}
+.tips li::before{content:"💡 ";}
+.toast{font-size:12.5px;color:var(--green);font-weight:600;min-height:0;text-align:center}
+.toast:empty{display:none}
+
+section.cat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 1px 2px rgba(15,23,42,.04);scroll-margin-top:118px}
+.cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cat-head h3{margin:0;font-size:16px;font-weight:700;color:var(--ink-strong)}
+.cat-head .pick{font-size:12px;color:var(--faint);text-align:right}
+.cat-head .pick b{color:var(--blue);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.chip{position:relative;text-align:left;border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:9px 10px;display:flex;flex-direction:column;gap:2px;min-height:62px;transition:transform .1s, background .15s}
+.chip:active{transform:scale(.97)}
+.chip .nm{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px;color:var(--ink);padding-right:26px;line-height:1.3}
+.chip .nt{font-size:11px;color:var(--faint);font-weight:500}
+.chip.sel{background:var(--blue);border-color:var(--blue);box-shadow:0 4px 6px -1px rgba(37,99,235,.25)}
+.chip.sel .nm{color:#fff}.chip.sel .nt{color:#dbeafe}
+.chip.rec{background:var(--green-soft);border-color:var(--rec-line);box-shadow:0 0 0 1px var(--rec-line)}
+.chip .badge{position:absolute;top:7px;right:8px;font-size:10px;font-weight:800;color:var(--green)}
+.chip.sel .badge{color:#fff}
+.chip.blocked{opacity:.4}
+.chip.blocked .nt{color:var(--amber)}
+.chip .thumb{width:22px;height:22px;border-radius:6px;object-fit:cover;flex:none;border:1px solid var(--line2)}
+.mine{font-size:9px;font-weight:800;color:var(--blue);background:var(--blue-soft);border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:1px}
+.chip.sel .mine{background:rgba(255,255,255,.2);color:#fff}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;border:1px solid var(--line2)}
+
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:448px;margin:0 auto;background:var(--bar);border-top:1px solid var(--bar-line);border-radius:16px 16px 0 0;box-shadow:0 -10px 25px -5px rgba(15,23,42,.25);display:flex;gap:6px;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.bbtn{flex:1;border:0;border-radius:10px;padding:10px 4px;font-size:13px;font-weight:700;background:#334155;color:#e2e8f0}
+.bbtn.primary{background:var(--blue);color:#fff;flex:1.4}
+.bbtn:active{transform:scale(.96)}
+.bbtn:focus-visible,.chip:focus-visible,.tab:focus-visible,.hbtn:focus-visible,input:focus-visible,select:focus-visible,.save:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:60}
+.overlay[hidden]{display:none}
+.sheet{background:var(--card);width:100%;max-width:448px;max-height:92%;overflow:auto;overscroll-behavior:contain;border-radius:16px 16px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.25)}
+@media (min-width:640px){.overlay{align-items:center}.sheet{border-radius:16px;max-width:384px}}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start}
+.eyebrow{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:.06em}
+.sheet h2{margin:2px 0 0;font-size:20px;font-weight:700;color:var(--ink-strong)}
+.x{border:0;background:var(--seg);border-radius:999px;width:36px;height:36px;font-size:18px;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label,.field .lbl{font-size:14px;color:var(--ink-strong);font-weight:700}
+.field input[type=text],.field select{border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:11px 12px;min-height:46px;width:100%;font-size:16px;font-weight:500;outline:none}
+.field input[type=text]:focus,.field select:focus{border-color:var(--blue)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.photo-btn{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;width:112px;height:112px;border:1px dashed var(--line2);border-radius:12px;background:var(--soft);color:var(--faint);font-size:12px;font-weight:700;text-align:center;padding:8px}
+#preview{max-width:100%;width:200px;border-radius:12px;border:1px solid var(--line2);cursor:crosshair;touch-action:manipulation}
+.detect{display:flex;flex-direction:column;gap:8px;font-size:13px;min-width:140px;flex:1}
+.detect .sw{display:flex;align-items:center;gap:8px;font-weight:600}
+.detect .big{width:34px;height:34px;border-radius:10px;border:1px solid var(--line2)}
+.checks{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px;color:var(--ink)}
+.checks label{display:flex;align-items:center;gap:6px;font-weight:500}
+.checks input{width:18px;height:18px;accent-color:var(--blue)}
+.hint{font-size:12px;color:var(--faint);margin:0;line-height:1.5}
+.save{width:100%;border:0;border-radius:12px;padding:14px;background:var(--blue);color:#fff;font-weight:700;font-size:15px;box-shadow:var(--save-shadow)}
+.save:active{transform:scale(.97)}
+.mylist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.mylist li{display:flex;align-items:center;gap:8px;font-size:14px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.mylist li .t{flex:1;font-weight:600}
+.del{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;color:#ef4444}
+.bbtn.save-btn{background:var(--green-soft);color:var(--green);box-shadow:inset 0 0 0 1px var(--rec-line)}
+.worn-tag{font-size:9px;font-weight:800;color:var(--muted);background:var(--seg);border-radius:4px;padding:1px 4px;margin-left:4px;vertical-align:1px}
+.chip.sel .worn-tag{background:rgba(255,255,255,.2);color:#fff}
+.sumlist{list-style:none;margin:0;padding:12px 14px;display:flex;flex-direction:column;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:12px;font-size:13.5px}
+.sumlist li{display:grid;grid-template-columns:48px 1fr;gap:8px}
+.sumlist .k{color:var(--faint);font-size:12px;font-weight:600}
+.field input[type=date]{border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:10px 12px;min-height:46px;width:100%;font-size:16px;font-weight:600}
+.segbar{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--seg);padding:4px;border-radius:10px}
+.segbar button{border:0;background:transparent;border-radius:7px;padding:7px 0;font-size:12px;font-weight:700;color:var(--faint)}
+.segbar button.on{background:var(--seg-on);color:var(--blue);box-shadow:0 1px 2px rgba(15,23,42,.08)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.log li{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
+.log .d{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:8px}
+.log .d b{font-size:14px;color:var(--ink-strong)}
+.log .items{color:var(--muted);line-height:1.6}
+.log .acts{display:flex;gap:6px}
+.mini{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;color:var(--muted)}
+.mini.red{color:#ef4444}
+.stat{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.stat li{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:13.5px}
+.bar{height:6px;border-radius:3px;background:var(--blue);opacity:.75;margin-top:3px}
+.stat .n{font-weight:700;color:var(--ink-strong);font-variant-numeric:tabular-nums}
+.stat .s{font-size:11px;color:var(--faint)}
+.empty-msg{color:var(--faint);font-size:13px;text-align:center;padding:16px 0;margin:0}
+textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+#bkArea:not([hidden]){display:flex;flex-direction:column;gap:8px}
+.divider{border:0;border-top:1px solid var(--line2);margin:0}
+@media (prefers-reduced-motion: reduce){.chip,.bbtn,.save{transition:none}.chip:active,.bbtn:active,.save:active{transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-row">
+      <div>
+        <h1>오늘의 <span>코디</span></h1>
+        <p class="sub">하나 고르면 나머지를 추천해 드려요</p>
+      </div>
+      <div style="display:flex;gap:6px"><button class="hbtn" type="button" data-act="add">+ 옷</button><button class="hbtn" type="button" data-act="reset">초기화</button><button class="hbtn" type="button" data-act="copy">복사</button></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="카테고리로 이동"></nav>
+  </header>
+
+  <main>
+    <div class="hero" aria-label="오늘 코디">
+      <div class="hero-top"><span class="pill" id="progress"></span><span class="pill" id="statePill" hidden></span></div>
+      <h2>오늘 코디</h2>
+      <ul class="slots" id="slots"></ul>
+    </div>
+    <ul class="note-box problems" id="problems" hidden></ul>
+    <ul class="note-box tips" id="tips" hidden></ul>
+    <div class="toast" id="toast" role="status"></div>
+    <div id="cats" style="display:flex;flex-direction:column;gap:14px"></div>
+  </main>
+</div>
+
+<div class="bottombar">
+  <button class="bbtn primary" type="button" data-act="auto">자동 완성</button>
+  <button class="bbtn" type="button" data-act="random">랜덤</button>
+  <button class="bbtn save-btn" type="button" data-act="wear">입었어요</button>
+  <button class="bbtn" type="button" data-act="history">기록</button>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+    <div class="sheet-head"><div><span class="eyebrow">ADD</span><h2 id="addTitle">옷 추가</h2></div><button class="x" type="button" id="closeAdd" aria-label="닫기">×</button></div>
+
+    <div class="field">
+      <span class="lbl">사진 <span class="hint" style="display:inline">(선택)</span></span>
+      <div class="photo">
+        <label class="photo-btn" for="photoInput"><span style="font-size:22px">📷</span>사진 찍기<br>또는 고르기</label>
+        <input id="photoInput" type="file" accept="image/*" hidden>
+        <canvas id="preview" hidden aria-label="사진을 누르면 그 부분의 색을 다시 읽어요"></canvas>
+        <div class="detect" id="detect" hidden>
+          <div class="sw"><span class="big" id="detSw"></span><span>읽은 색 <b id="detHex"></b></span></div>
+          <span class="hint" id="detFam"></span>
+          <span class="hint">옷이 가운데 오게 찍으면 가운데 색을 읽어요. 사진에서 옷 부분을 누르면 그 자리 색으로 다시 읽어요.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="hexInput">색 코드로 입력 <span class="hint" style="display:inline">(선택 · 팬톤 앱 등에서 찾은 Hex)</span></label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="hexPicker" type="color" value="#808080" aria-label="색 직접 고르기" style="width:46px;height:46px;border:1px solid var(--line2);border-radius:12px;padding:3px;background:var(--soft)">
+        <input id="hexInput" type="text" placeholder="#A3AD8E" autocomplete="off" autocapitalize="characters" spellcheck="false" style="flex:1">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label for="fCat">종류</label>
+        <select id="fCat">
+          <option value="outer">아우터</option><option value="base">베이스 (셔츠·티)</option><option value="mid" selected>미드 (니트·맨투맨)</option>
+          <option value="pants">하의</option><option value="shoes">신발</option><option value="glasses">안경</option><option value="acc">액세서리 (목도리 등)</option>
+        </select></div>
+      <div class="field"><label for="fColor">색 계열</label><select id="fColor"></select></div>
+    </div>
+    <div class="field"><label for="fName">이름</label><input id="fName" type="text" placeholder="예: 네이비 케이블 니트" autocomplete="off"></div>
+    <div class="field" id="fFormWrap"><label for="fForm">분위기</label>
+      <select id="fForm"><option value="0">캐주얼</option><option value="1" selected>세미 캐주얼</option><option value="2">단정</option><option value="3">포멀</option></select></div>
+    <div id="extra" class="field"></div>
+    <div class="field"><label for="fNote">메모 <span class="hint" style="display:inline">(선택)</span></label><input id="fNote" type="text" placeholder="예: 기장 짧음" autocomplete="off"></div>
+    <button class="save" type="button" id="saveAdd">추가하기</button>
+    <p class="hint" id="saveHint"></p>
+
+    <hr class="divider" id="myDivider" hidden>
+    <div class="field" id="myWrap" hidden>
+      <span class="lbl">내가 추가한 옷</span>
+      <ul class="mylist" id="myList"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="wearOv" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="wearTitle">
+    <div class="sheet-head"><div><span class="eyebrow">LOG</span><h2 id="wearTitle">입은 옷 저장</h2></div><button class="x" type="button" data-close="wearOv" aria-label="닫기">×</button></div>
+    <div class="field"><label for="wearDate">날짜</label><input type="date" id="wearDate"></div>
+    <ul class="sumlist" id="wearSum"></ul>
+    <p class="hint" id="wearHint"></p>
+    <button class="save" type="button" id="wearSave">저장하기</button>
+  </div>
+</div>
+
+<div class="overlay" id="histOv" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+    <div class="sheet-head"><div><span class="eyebrow">HISTORY</span><h2 id="histTitle">입은 기록</h2></div><button class="x" type="button" data-close="histOv" aria-label="닫기">×</button></div>
+    <div class="segbar" id="histTabs"><button type="button" data-tab="log" class="on">날짜별</button><button type="button" data-tab="stat">많이 입은 옷</button><button type="button" data-tab="rest">오래 안 입은 옷</button></div>
+    <div id="histBody"></div>
+    <hr class="divider">
+    <div class="field">
+      <span class="lbl">백업 · 복원</span>
+      <p class="hint">기록과 추가한 옷은 이 휴대폰 브라우저에만 저장돼요. 가끔 파일로 백업해 두세요. 다른 기기로 옮길 때도 이 파일을 쓰면 돼요.</p>
+      <div class="row-btns"><button class="mini" type="button" id="bkFile">파일로 백업</button><button class="mini" type="button" id="bkLoad">파일에서 복원</button><button class="mini" type="button" id="bkCopy">백업 글 복사</button><button class="mini" type="button" id="bkShow">글로 복원</button></div>
+      <input type="file" id="bkInput" accept="application/json,.json" hidden>
+      <div id="bkArea" hidden>
+        <textarea class="bk" id="bkText" placeholder="복사해 둔 백업 글을 여기에 붙여넣으세요" aria-label="백업 글"></textarea>
+        <button class="mini" type="button" id="bkApply">이 내용으로 복원</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ORIG_FAMS=new Set(["black","charcoal","grey","white","ecru","beige","brown","burgundy","navy","lightblue","denim","lightdenim","sage","greygreen","olive","green"]);
+const FAM = {
+  black:{ko:"검정",hex:"#1d1d1f",refs:["#1a1a1a","#2b2b2b","#232427"]},
+  charcoal:{ko:"차콜",hex:"#4a4d52",refs:["#3f4246","#55585c","#4a4d52"]},
+  grey:{ko:"회색",hex:"#8b8f94",refs:["#8b8f94","#a7aaad","#6f7378","#b9bbbd"]},
+  white:{ko:"흰색",hex:"#fbfbf8",refs:["#f5f5f2","#ffffff","#e9eaea"]},
+  ecru:{ko:"에크루",hex:"#ece4d2",refs:["#ece4d2","#e3d9c2","#efe8d8"]},
+  beige:{ko:"베이지",hex:"#cdb894",refs:["#cdb894","#d8c6a5","#bfa77f","#c9b38a"]},
+  brown:{ko:"갈색",hex:"#7a5236",refs:["#6b4a32","#7a5236","#5a3b28","#8a6242","#4a3324"]},
+  burgundy:{ko:"버건디",hex:"#6e2b2b",refs:["#6e2b2b","#5a1f24","#7d3434","#4e1c20"]},
+  navy:{ko:"네이비",hex:"#22304d",refs:["#1f2a44","#2a3756","#1b2233","#283350"]},
+  lightblue:{ko:"하늘색",hex:"#a9c7e3",refs:["#a9c7e3","#bcd4ea","#93b5d6","#cddcec"]},
+  denim:{ko:"진청",hex:"#2e3f5f",refs:["#2e3f5f","#33476b","#26344d","#3a4f75"]},
+  lightdenim:{ko:"연청",hex:"#8fa9c6",refs:["#8fa9c6","#7d99ba","#a2b8d2","#6f8db0"]},
+  sage:{ko:"연녹색(세이지)",hex:"#a3ad8e",refs:["#a3ad8e","#b4bb9e","#929c7e"]},
+  greygreen:{ko:"회녹색",hex:"#8c958a",refs:["#8c958a","#7e887c","#99a196"]},
+  olive:{ko:"올리브",hex:"#5f6440",refs:["#5f6440","#6b6b3f","#4f5535","#706a45"]},
+  green:{ko:"녹색",hex:"#3f6a4a",refs:["#3f6a4a","#2f5a3c","#4a7a55","#2c4a35"]},
+  camel:{ko:"카멜",hex:"#b8875a",refs:["#b8875a","#c19a6b","#a8774a"]},
+  khaki:{ko:"카키(베이지빛)",hex:"#a89b6c",refs:["#a89b6c","#b5a67a","#9a8c5e"]},
+  mustard:{ko:"머스터드",hex:"#c99a2e",refs:["#c99a2e","#d4a73a","#b8891f"]},
+  rust:{ko:"러스트·테라코타",hex:"#a4532e",refs:["#a4532e","#b5603a","#8f4527","#c06b45"]},
+  orange:{ko:"오렌지",hex:"#d9772b",refs:["#d9772b","#e8842f","#c96a22"]},
+  yellow:{ko:"옐로",hex:"#e8c547",refs:["#e8c547","#f0d35c","#dcb83a"]},
+  red:{ko:"레드",hex:"#b3262e",refs:["#b3262e","#c42f36","#9e1f27"]},
+  pink:{ko:"핑크",hex:"#e3a7b4",refs:["#e3a7b4","#d98fa0","#efc1cb"]},
+  purple:{ko:"퍼플",hex:"#5d3f74",refs:["#5d3f74","#6e4d87","#4b315f","#8a6fa3"]},
+  teal:{ko:"틸·청록",hex:"#2f6f73",refs:["#2f6f73","#2a5f63","#3c8186"]}
+};
+
+const CATS = [
+  {key:"outer", label:"아우터", short:"아우터"},
+  {key:"base", label:"베이스 (셔츠·티)", short:"베이스"},
+  {key:"mid", label:"미드 (니트·맨투맨)", short:"미드"},
+  {key:"pants", label:"하의", short:"하의"},
+  {key:"shoes", label:"신발", short:"신발"},
+  {key:"glasses", label:"안경", short:"안경"},
+  {key:"acc", label:"액세서리 (목도리 등)", short:"소품"}
+];
+
+const BASE_ITEMS = [
+  {id:"coat_black", cat:"outer", name:"검은 캐시미어 싱글코트", short:"캐시미어 코트", color:"black", form:3, maxThick:1, long:true, strict:true, note:"검은 울·네이비 2턱만"},
+  {id:"balmacaan", cat:"outer", name:"도네갈 발마칸", short:"발마칸", color:"beige", form:2, maxThick:2, long:true, note:"품 넉넉, 두꺼운 니트 OK"},
+  {id:"donegal_bw", cat:"outer", name:"흑백 도네갈", short:"흑백 도네갈", color:"grey", form:2, maxThick:1, note:"회색 톤온톤"},
+  {id:"hunting", cat:"outer", name:"네이비 해리스트위드 헌팅코트", short:"헌팅코트", color:"navy", form:2, maxThick:1, note:"짧은 기장, 얇은 이너"},
+  {id:"maxi", cat:"outer", name:"갈색 트위드 맥시", short:"트위드 맥시", color:"brown", form:2, maxThick:1, long:true, note:"슬림, 얇은 이너만"},
+  {id:"padding", cat:"outer", name:"검은 숏패딩", short:"숏패딩", color:"black", form:0, maxThick:2, casual:true, shortOuter:true, note:"주말·한파"},
+  {id:"outer_none", cat:"outer", name:"아우터 없음", short:"아우터 없음", color:"none", maxThick:2, none:true, shortOuter:true, note:"실내·간절기"},
+
+  {id:"shirt_white", cat:"base", name:"흰 셔츠", color:"white", form:3, shirt:true, note:"어디에나"},
+  {id:"shirt_blue", cat:"base", name:"하늘색 셔츠", color:"lightblue", form:3, shirt:true, blue:true, note:"연청과 X"},
+  {id:"shirt_lblue", cat:"base", name:"연하늘 셔츠", color:"lightblue", form:3, shirt:true, blue:true, note:"연청과 X"},
+  {id:"tee_white", cat:"base", name:"흰 긴팔 면티", color:"white", form:0, tee:true, note:"레이어드용"},
+  {id:"tee_sage", cat:"base", name:"회녹색 면티", color:"greygreen", form:0, tee:true, mustCoverWithGreen:true, note:"녹색 바지엔 덮어서"},
+  {id:"base_none", cat:"base", name:"베이스 없음", color:"none", none:true, note:"니트·맨투맨 단독"},
+
+  {id:"halfneck", cat:"mid", name:"베이지버건디 하프넥", short:"하프넥", color:"burgundy", form:2, thick:0, noShirt:true, cashmere:true, note:"셔츠 X, 단독"},
+  {id:"turtle", cat:"mid", name:"검은 터틀넥", short:"터틀넥", color:"black", form:3, thick:0, noShirt:true, cashmere:true, note:"셔츠 X"},
+  {id:"crew_charcoal", cat:"mid", name:"진회색 캐시미어", color:"charcoal", form:2, thick:0, cashmere:true, note:"셔츠 위 OK"},
+  {id:"vneck_brown", cat:"mid", name:"갈색 V넥", color:"brown", form:2, thick:0, wantsShirt:true, note:"셔츠 위"},
+  {id:"card_black", cat:"mid", name:"검은 캐시미어 가디건", color:"black", form:2, thick:0, wantsShirt:true, cashmere:true, note:"V존 높음, 셔츠 위"},
+  {id:"card_bb", cat:"mid", name:"베이지버건디 가디건", color:"burgundy", form:2, thick:0, wantsShirt:true, cashmere:true, note:"셔츠 위"},
+  {id:"zip_grey", cat:"mid", name:"회색 캐시미어 집업", color:"grey", form:2, thick:0, cashmere:true, note:"셔츠·티 위"},
+  {id:"zip_navy", cat:"mid", name:"네이비 캐시미어 집업", color:"navy", form:2, thick:0, cashmere:true, note:"셔츠·티 위"},
+  {id:"polo_hz", cat:"mid", name:"폴로 검은 꽈배기 하프집업", short:"폴로 하프집업", color:"black", form:1, thick:1, collarOut:true, note:"셔츠 깃 꺼내기 OK"},
+  {id:"waffle_black", cat:"mid", name:"검은 와플", color:"black", form:1, thick:1, textured:true, note:"흰 티 받쳐 입기"},
+  {id:"waffle_green", cat:"mid", name:"녹색 와플", color:"green", form:1, thick:1, textured:true, note:"녹색 바지 X"},
+  {id:"fisherman", cat:"mid", name:"네이비 헤비 피셔맨", short:"피셔맨", color:"navy", form:1, thick:2, textured:true, note:"두꺼움, 발마칸 안"},
+  {id:"sw_black", cat:"mid", name:"검정 맨투맨", color:"black", form:0, thick:1, sweat:true, note:""},
+  {id:"sw_ecru", cat:"mid", name:"에크루 맨투맨", color:"ecru", form:0, thick:1, sweat:true, note:""},
+  {id:"sw_grey", cat:"mid", name:"회색 맨투맨", color:"grey", form:0, thick:1, sweat:true, note:""},
+  {id:"sw_beige", cat:"mid", name:"베이지 맨투맨", color:"beige", form:0, thick:1, sweat:true, note:""},
+  {id:"sw_navy", cat:"mid", name:"네이비 맨투맨", color:"navy", form:0, thick:1, sweat:true, note:""},
+  {id:"sw_hz", cat:"mid", name:"밝은 회색 하프집업 맨투맨", short:"짧은 하프집업 맨투맨", color:"grey", form:0, thick:1, sweat:true, cropped:true, note:"기장 짧음, 숏패딩·단독"},
+  {id:"fleece_navy", cat:"mid", name:"네이비 후리스 풀오버", short:"후리스", color:"navy", form:0, thick:2, fleece:true, note:"티 위에"},
+  {id:"fleece_green", cat:"mid", name:"녹색 후리스 풀오버", short:"후리스", color:"green", form:0, thick:2, fleece:true, note:"티 위에, 녹색 바지 X"},
+  {id:"mid_none", cat:"mid", name:"미드 없음", color:"none", none:true, note:"셔츠만"},
+
+  {id:"hbt", cat:"pants", name:"연녹색 HBT 스탠다드", color:"sage", form:1, note:"브레이크"},
+  {id:"wool_black", cat:"pants", name:"검은 울 스탠다드", color:"black", form:3, dressy:true, note:"가장 포멀"},
+  {id:"navy_2tuck", cat:"pants", name:"JWA 네이비 2턱 치노", color:"navy", form:2, dressy:true, note:"브레이크"},
+  {id:"grey_wide", cat:"pants", name:"회색 와이드테이퍼드", color:"grey", form:2, croppedPants:true, note:"똑기장"},
+  {id:"u_beige", cat:"pants", name:"유니클로U 치노 베이지", color:"beige", form:1, note:"캐주얼"},
+  {id:"u_black", cat:"pants", name:"유니클로U 치노 검정", color:"black", form:1, note:"캐주얼"},
+  {id:"u_bluegrey", cat:"pants", name:"유니클로U 치노 블루그레이", color:"grey", form:1, note:"캐주얼"},
+  {id:"jwa_denim", cat:"pants", name:"JWA 워싱진 (연청)", color:"lightdenim", form:0, denim:true, note:"하늘색 셔츠 X"},
+  {id:"lvc", cat:"pants", name:"LVC 55501", color:"denim", form:0, denim:true, note:"리지드 10회+ 세탁"},
+  {id:"fatigue", cat:"pants", name:"올리브 퍼티그", color:"olive", form:0, croppedPants:true, workwear:true, note:"똑기장"},
+
+  {id:"alden", cat:"shoes", name:"알든 990", color:"burgundy", form:2, chunky:true, note:"컬러8 코도반"},
+  {id:"shannon", cat:"shoes", name:"처치스 섀넌", color:"burgundy", form:2, chunky:true, note:"두툼한 밑창"},
+  {id:"fullwing", cat:"shoes", name:"검은 풀윙 더비", color:"black", form:2, note:"검정 브로그, 트래디셔널"},
+  {id:"derby_black", cat:"shoes", name:"검은 더비", color:"black", form:3, note:"검정·회색 조합"},
+  {id:"nb990", cat:"shoes", name:"뉴발 990", color:"grey", form:0, sneaker:true, chunky:true, note:"캐주얼"},
+  {id:"nb9965", cat:"shoes", name:"뉴발 996.5 흰색", color:"white", form:0, sneaker:true, chunky:true, note:"키스 콜라보"},
+
+  {id:"g_half", cat:"glasses", name:"레이밴 하금태", color:"none", gstyle:"half", note:"셔츠 출근"},
+  {id:"g_round", cat:"glasses", name:"동그란 얇은 금태", color:"none", gstyle:"round", note:"검은 코트·하프넥·캐시미어"},
+  {id:"g_arnel", cat:"glasses", name:"타르트옵티컬 아넬", color:"none", gstyle:"arnel", note:"데님·패딩·캐주얼"},
+  {id:"g_none", cat:"glasses", name:"안경 없음", color:"none", none:true, note:"렌즈·맨눈"},
+
+  {id:"scarf_charcoal", cat:"acc", name:"짙은 회색 캐시미어 목도리", short:"목도리", color:"charcoal", accent:"burgundy", form:2, scarf:true, note:"끝에 버건디 한 줄"},
+  {id:"acc_none", cat:"acc", name:"액세서리 없음", color:"none", none:true, note:"없이 나가기"}
+];
+
+const GREEN_FAMS = ["green","sage","olive"];
+const STORE_KEY = "wardrobe.custom.v1";
+let custom = [];
+try{ custom = JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ custom = []; }
+let storageOk = true;
+try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ storageOk=false; }
+
+let ITEMS=[], BY={};
+function rebuild(){
+  ITEMS=[...BASE_ITEMS, ...custom];
+  ITEMS.forEach(i=>{ if(i.cat==="mid"||i.cat==="pants") i.green = GREEN_FAMS.includes(i.color)||(i.color==="custom"&&i.hex&&(()=>{const c=lchOf(i.hex);return c.C>=14&&c.h>=100&&c.h<=170;})()); });
+  BY=Object.fromEntries(ITEMS.map(i=>[i.id,i]));
+}
+rebuild();
+
+const PAIRS = `navy-grey 2,navy-charcoal 2,navy-white 2,navy-lightblue 2,navy-burgundy 2,navy-beige 2,navy-brown 2,navy-sage 2,navy-olive 2,navy-ecru 2,navy-lightdenim 1,navy-denim 1,navy-green 1,navy-greygreen 2,
+grey-black 2,grey-white 2,grey-lightblue 2,grey-burgundy 2,grey-sage 2,grey-olive 1,grey-green 1,grey-denim 1,grey-lightdenim 1,grey-ecru 1,grey-brown 1,grey-beige 1,grey-charcoal 1,
+charcoal-white 2,charcoal-lightblue 2,charcoal-burgundy 2,charcoal-sage 2,charcoal-black 1,charcoal-beige 1,charcoal-olive 1,charcoal-denim 1,
+brown-sage 2,brown-white 2,brown-lightblue 2,brown-beige 1,brown-olive 2,brown-denim 2,brown-lightdenim 1,brown-ecru 2,brown-burgundy 2,brown-green 1,brown-greygreen 1,brown-grey 1,
+burgundy-sage 2,burgundy-beige 2,burgundy-black 1,burgundy-denim 2,burgundy-lightdenim 1,burgundy-lightblue 1,burgundy-white 1,burgundy-ecru 1,burgundy-olive 1,burgundy-green 1,burgundy-greygreen 1,
+black-white 2,black-black 1,black-denim 2,black-lightdenim 2,black-olive 2,black-ecru 2,black-beige 1,black-sage 1,black-green 1,black-greygreen 1,black-lightblue 1,
+lightblue-beige 2,lightblue-sage 2,lightblue-denim 1,lightblue-white 1,lightblue-black 1,lightblue-olive 1,lightblue-ecru 1,
+white-beige 1,white-sage 2,white-olive 1,white-denim 2,white-lightdenim 1,white-green 1,white-greygreen 1,
+ecru-olive 2,ecru-denim 2,ecru-lightdenim 1,ecru-sage 1,ecru-green 1,
+beige-sage 1,beige-olive 2,beige-denim 1,beige-lightdenim 1,beige-green 1,beige-beige -1,beige-greygreen 1,
+sage-olive -1,sage-green -2,sage-denim 1,sage-lightdenim 1,olive-green -2,olive-denim 1,green-denim 2,green-lightdenim 1,denim-lightdenim -1`;
+const AFF = {};
+PAIRS.split(",").forEach(s=>{const [p,v]=s.trim().split(" ");const [a,b]=p.split("-");AFF[a+"|"+b]=+v;AFF[b+"|"+a]=+v;});
+const aff=(a,b)=>(a==="none"||b==="none"||!a||!b)?0:(AFF[a+"|"+b]||0);
+/* 표에 없는 색은 색 이론으로 계산: 무채색·어스톤은 대부분과 맞고, 강한 색끼리는 비슷한 색상(톤온톤)이나
+   한쪽이 차분한 보색만 플러스, 나머지는 감점 → 강한 색은 한 코디에 하나 */
+const NEUTRAL_FAMS=new Set(["black","charcoal","grey","white","ecru","beige","brown","navy","denim","lightdenim","camel","khaki"]);
+const famHex=k=>FAM[k]?FAM[k].hex:null;
+function lchOf(hex){const [L,a,b]=rgbToLab(...hexToRgb(hex));return {L,C:Math.hypot(a,b),h:(Math.atan2(b,a)*180/Math.PI+360)%360};}
+function isNeutralColor(key,hex){ if(NEUTRAL_FAMS.has(key)) return true; return hex?lchOf(hex).C<14:false; }
+function theoryAff(ka,ha,kb,hb){
+  const na=isNeutralColor(ka,ha), nb=isNeutralColor(kb,hb);
+  if(na&&nb) return 1;
+  if(na||nb) return 1.2;
+  const A=lchOf(ha),B=lchOf(hb); let d=Math.abs(A.h-B.h); d=Math.min(d,360-d);
+  if(Math.min(A.C,B.C)<22) return 0.8; // 한쪽이 톤 다운된 색이면 대체로 무난
+  if(d<25) return 0.5;
+  if(d>=150) return Math.min(A.C,B.C)<35?1:-1.5;
+  return -1;
+}
+function affPair(ka,ha,kb,hb){
+  if(!ka||!kb||ka==="none"||kb==="none") return 0;
+  if(ORIG_FAMS.has(ka)&&ORIG_FAMS.has(kb)) return aff(ka,kb);
+  ha=ha||famHex(ka); hb=hb||famHex(kb);
+  if(!ha||!hb) return 0;
+  return theoryAff(ka,ha,kb,hb);
+}
+const affItems=(x,y)=>affPair(x.color,x.color==="custom"?x.hex:null,y.color,y.color==="custom"?y.hex:null);
+
+const EMPTY={outer:null,base:null,mid:null,pants:null,shoes:null,glasses:null,acc:null};
+let sel={...EMPTY, pants:"hbt"};
+const get=id=>id?BY[id]:null;
+const nm=i=>i.short||i.name;
+
+function problems(s){
+  const o=get(s.outer), b=get(s.base), m=get(s.mid), p=get(s.pants), sh=get(s.shoes);
+  const out=[]; const add=msg=>out.push(msg);
+  if(o&&o.strict&&p&&!p.dressy) add(`${nm(o)}에는 검은 울·네이비 2턱 같은 드레스 바지만 어울려요`);
+  if(o&&o.strict&&sh&&sh.sneaker) add(`${nm(o)}에 스니커즈는 안 맞아요`);
+  if(o&&m&&!m.none&&m.thick>o.maxThick) add(`${nm(o)} 안에 ${nm(m)}는 너무 두꺼워요`);
+  if(m&&m.noShirt&&b&&b.shirt) add(`${nm(m)}는 셔츠 위에 입지 않아요`);
+  if(m&&m.fleece&&b&&b.shirt) add("후리스는 셔츠 말고 티 위에 입어요");
+  if(m&&m.green&&p&&p.green) add("녹색 상의와 녹색 바지가 겹쳐요");
+  if(p&&p.color==="lightdenim"&&b&&b.blue) add("연청 데님에 하늘색 셔츠는 색이 묻혀요");
+  if(m&&m.cropped&&o&&!o.shortOuter) add("기장 짧은 상의는 숏패딩이나 단독으로 입어요");
+  if(b&&b.mustCoverWithGreen&&p&&p.green&&m&&m.none) add("녹색 바지와 입을 땐 회녹색 티를 니트로 덮어요");
+  if(b&&b.none&&m&&m.none) add("셔츠·티나 니트 중 하나는 입어야 해요");
+  if(o&&o.none&&m&&m.none&&b&&b.tee) add("티 한 장만으로는 허전해요");
+  return out;
+}
+function statusFor(cat,id,s){
+  const before=new Set(problems({...s,[cat]:null}));
+  const after=problems({...s,[cat]:id}).filter(x=>!before.has(x));
+  return after.length?after[0]:null;
+}
+function glassScore(it,s){
+  const o=get(s.outer),b=get(s.base),m=get(s.mid),p=get(s.pants);
+  const shirt=!!(b&&b.shirt);
+  const casual=!!((p&&(p.denim||p.workwear||p.form===0))||(o&&o.casual)||(m&&(m.fleece||m.sweat)));
+  const strict=!!(o&&o.strict);
+  if(it.gstyle==="half") return (shirt?3:0)+(o&&!o.none&&!o.casual&&!o.strict?1:0)-(casual?2:0)-(strict?1:0);
+  if(it.gstyle==="round") return (strict?3:0)+(m&&m.noShirt?3:0)+(m&&m.cashmere&&!shirt?1:0)-(casual?1:0);
+  if(it.gstyle==="arnel") return (casual?3:0)+(o&&o.id==="maxi"?1:0)+(m&&(m.textured||m.collarOut)?1:0)-(shirt&&!casual?1:0);
+  return 0;
+}
+function score(cat,id,s){
+  const w=(prevWorn().ids.has(id)&&!BY[id].none)?5:0;
+  return baseScore(cat,id,s)-w;
+}
+function baseScore(cat,id,s){
+  const it=BY[id];
+  if(cat==="glasses") return glassScore(it,s);
+  let sc=it.none?-0.5:0;
+  for(const c of CATS){
+    if(c.key===cat||c.key==="glasses") continue;
+    const o=get(s[c.key]); if(!o) continue;
+    sc+=affItems(it,o)*0.8;
+    if(it.form!=null&&o.form!=null){const d=Math.abs(it.form-o.form); if(d>=2) sc-=1.5*(d-1);}
+  }
+  const b=get(s.base),m=get(s.mid),p=get(s.pants),sh=get(s.shoes);
+  if(cat==="mid"&&it.wantsShirt&&b) sc+=b.shirt?1.5:-2;
+  if(cat==="base"&&m&&m.wantsShirt) sc+=it.shirt?1.5:-2;
+  if(cat==="base"&&m&&(m.sweat||m.fleece)&&it.tee) sc+=1;
+  if(cat==="mid"&&b&&b.tee&&(it.sweat||it.fleece)) sc+=1;
+  if(cat==="shoes"&&p&&p.croppedPants&&it.chunky) sc+=1;
+  if(cat==="pants"&&sh&&sh.chunky&&it.croppedPants) sc+=1;
+  if(cat==="shoes"&&p&&p.green&&it.color==="burgundy") sc+=1;
+  if(cat==="pants"&&sh&&sh.color==="burgundy"&&it.green) sc+=1;
+  if(cat==="acc"&&it.accent){
+    for(const c of CATS){ if(c.key==="acc"||c.key==="glasses") continue; const o=get(s[c.key]); if(!o) continue;
+      sc+=affPair(it.accent,null,o.color,o.color==="custom"?o.hex:null)*0.4+(o.color===it.accent?0.6:0); }
+  }
+  if(cat==="acc"&&it.scarf){
+    const o=get(s.outer);
+    if(o&&o.none) sc-=3; else if(o&&o.long) sc+=1; else if(o) sc+=0.5;
+    if(m&&m.noShirt) sc-=1.5;
+  }
+  return sc;
+}
+function ranked(cat,s){
+  return ITEMS.filter(i=>i.cat===cat).map(i=>({it:i,blocked:statusFor(cat,i.id,s),sc:score(cat,i.id,s)}));
+}
+function fill(jitter){
+  const s={...sel};
+  for(const cat of ["outer","pants","mid","base","shoes","glasses","acc"]){
+    if(s[cat]) continue;
+    const list=ranked(cat,s).filter(x=>!x.blocked).map(x=>({...x,r:x.sc+(jitter?Math.random()*jitter:0)})).sort((a,b)=>b.r-a.r);
+    if(list.length) s[cat]=list[0].it.id;
+  }
+  sel=s; render();
+}
+
+function swatch(it){
+  if(it.thumb) return `<img class="thumb" src="${it.thumb}" alt="">`;
+  if(it.color==="none") return "";
+  return `<span class="dot" style="background:${it.hex||(FAM[it.color]?FAM[it.color].hex:"#999")}"></span>`;
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const anyPicked=CATS.some(c=>sel[c.key]);
+  document.getElementById("slots").innerHTML=CATS.map(c=>{
+    const it=get(sel[c.key]);
+    return `<li class="slot"><span class="k">${c.short}</span><span class="v ${it?"":"empty"}">${it?`${swatch(it)}<span class="t">${esc(it.name)}</span>`:"아직 안 고름"}</span></li>`;
+  }).join("");
+  const n=CATS.filter(c=>sel[c.key]).length;
+  document.getElementById("progress").textContent=`${n} / ${CATS.length}`;
+
+  const pr=problems(sel);
+  const pe=document.getElementById("problems");
+  pe.hidden=!pr.length; pe.innerHTML=pr.map(x=>`<li>${x}</li>`).join("");
+  const sp=document.getElementById("statePill");
+  if(pr.length){sp.hidden=false;sp.className="pill warn";sp.textContent="확인 필요";}
+  else if(n===CATS.length){sp.hidden=false;sp.className="pill ok";sp.textContent="코디 완성";}
+  else sp.hidden=true;
+
+  const tips=[];
+  const o=get(sel.outer),b=get(sel.base),m=get(sel.mid),p=get(sel.pants);
+  if(p&&p.croppedPants) tips.push(p.color==="grey"?"똑기장이라 양말이 보여요. 차콜이나 버건디 양말을 신으세요.":"똑기장이라 양말이 보여요. 네이비나 브라운 울 양말이 잘 맞아요.");
+  if(o&&o.long) tips.push("많이 추운 날엔 경량패딩을 코트 안에 받쳐 입으세요.");
+  if(m&&m.collarOut&&b&&b.shirt) tips.push("지퍼를 조금 내리고 셔츠 깃을 밖으로 꺼내 입으세요.");
+  if(b&&b.mustCoverWithGreen&&p&&p.green&&m&&!m.none) tips.push("회녹색 티는 목선만 살짝 보이게 덮어 입으세요.");
+  if(b&&b.id==="tee_white"&&m&&!m.none&&["black","navy","charcoal"].includes(m.color)) tips.push("흰 티가 소매·밑단으로 살짝 보이면 더 산뜻해요.");
+  const ac=get(sel.acc), sh0=get(sel.shoes);
+  if(ac&&ac.accent&&[sh0,m,p,b].some(x=>x&&x.color===ac.accent)) tips.push(`${ac.short||ac.name} 끝의 ${FAM[ac.accent].ko} 줄이 ${[sh0,m,p,b].find(x=>x&&x.color===ac.accent).name}와(과) 이어져요.`);
+  if(ac&&ac.scarf&&m&&m.noShirt) tips.push("목이 올라오는 니트라 목도리는 느슨하게 한 번만 두르세요.");
+  if(n===CATS.length&&!pr.length) tips.push("포터 서류가방과 시마스터는 어느 조합에나 그대로 OK.");
+  const te=document.getElementById("tips");
+  te.hidden=!tips.length; te.innerHTML=tips.map(t=>`<li>${t}</li>`).join("");
+
+  document.getElementById("tabs").innerHTML=CATS.map(c=>`<button type="button" class="tab ${sel[c.key]?"done":""}" data-jump="${c.key}">${c.short}</button>`).join("");
+
+  document.getElementById("cats").innerHTML=CATS.map(c=>{
+    const list=ranked(c.key,sel);
+    const pw=prevWorn();
+    const recIds=new Set();
+    if(anyPicked&&!sel[c.key]){
+      list.filter(x=>!x.blocked&&!x.it.none&&!pw.ids.has(x.it.id)).sort((a,b)=>b.sc-a.sc).slice(0,2)
+        .forEach(x=>{ if(x.sc>0||c.key==="glasses") recIds.add(x.it.id); });
+    }
+    const order=[...list].sort((a,b)=>{
+      const as=sel[c.key]===a.it.id, bs=sel[c.key]===b.it.id;
+      if(as!==bs) return as?-1:1;
+      if(!!a.blocked!==!!b.blocked) return a.blocked?1:-1;
+      return anyPicked?b.sc-a.sc:0;
+    });
+    const cur=get(sel[c.key]);
+    return `<section class="cat" id="sec-${c.key}" aria-labelledby="h-${c.key}">
+      <div class="cat-head"><h3 id="h-${c.key}">${c.label}</h3><span class="pick">${cur?`<b>${esc(cur.name)}</b>`:(anyPicked?"초록 테두리가 추천":"")}</span></div>
+      <div class="grid">${order.map(x=>{
+        const it=x.it, isSel=sel[c.key]===it.id, rec=recIds.has(it.id), bl=x.blocked&&!isSel;
+        const cls=["chip",isSel?"sel":"",rec?"rec":"",bl?"blocked":""].join(" ");
+        const note=bl?x.blocked:it.note;
+        return `<button type="button" class="${cls}" data-cat="${c.key}" data-id="${it.id}" ${bl?'aria-disabled="true"':""} aria-pressed="${isSel}">
+          ${isSel?'<span class="badge">선택</span>':rec?'<span class="badge">추천</span>':""}
+          <span class="nm">${swatch(it)}<span>${esc(it.name)}${it.custom?'<span class="mine">내 옷</span>':""}${pw.ids.has(it.id)&&!it.none?`<span class="worn-tag">${pw.label} 입음</span>`:""}</span></span>${note?`<span class="nt">${esc(note)}</span>`:""}</button>`;
+      }).join("")}</div></section>`;
+  }).join("");
+}
+
+const toast=msg=>{const t=document.getElementById("toast");t.textContent=msg;setTimeout(()=>{if(t.textContent===msg)t.textContent="";},2600);};
+
+document.getElementById("cats").addEventListener("click",e=>{
+  const btn=e.target.closest(".chip"); if(!btn) return;
+  const {cat,id}=btn.dataset;
+  if(sel[cat]===id){ sel={...sel,[cat]:null}; render(); return; }
+  if(btn.getAttribute("aria-disabled")==="true"){ toast(BY[id].name+": "+statusFor(cat,id,sel)); return; }
+  sel={...sel,[cat]:id}; render();
+});
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("[data-jump]"); if(!b) return;
+  const el=document.getElementById("sec-"+b.dataset.jump);
+  el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const a=b.dataset.act;
+  if(a==="auto") fill(0);
+  if(a==="random"){
+    sel={...EMPTY};
+    const pw0=prevWorn(); const pl=ITEMS.filter(i=>i.cat==="pants"&&!pw0.ids.has(i.id));
+    sel.pants=pl[Math.floor(Math.random()*pl.length)].id;
+    fill(2.5);
+  }
+  if(a==="reset"){ sel={...EMPTY}; render(); }
+  if(a==="copy"){
+    const txt=CATS.map(c=>`${c.short}: ${get(sel[c.key])?get(sel[c.key]).name:"-"}`).join("\n");
+    try{ await navigator.clipboard.writeText(txt); toast("코디를 복사했어요."); }
+    catch(err){ toast("복사가 막혔어요. 목록을 길게 눌러 복사하세요."); }
+  }
+  if(a==="add") openAdd();
+  if(a==="wear") openWear();
+  if(a==="history") openHist();
+});
+
+/* ---------- 옷 추가 ---------- */
+const $=id=>document.getElementById(id);
+const fColor=$("fColor");
+fColor.innerHTML=Object.entries(FAM).map(([k,v])=>`<option value="${k}">${v.ko}</option>`).join("")+`<option value="custom">포인트 색 (사진·코드 색 그대로)</option>`;
+let photoState={hex:null, thumb:null};
+
+function extraFields(cat){
+  const chk=(id,label,checked)=>`<label><input type="checkbox" id="${id}" ${checked?"checked":""}> ${label}</label>`;
+  const sel_=(id,label,opts)=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${opts.map(([v,t,s])=>`<option value="${v}" ${s?"selected":""}>${t}</option>`).join("")}</select></div>`;
+  if(cat==="outer") return sel_("xLen","기장",[["short","짧음 (재킷·패딩)"],["long","김 (코트)",true]])+`<div class="checks">${chk("xThick","안에 두꺼운 니트도 들어감",false)}</div>`;
+  if(cat==="base") return sel_("xType","형태",[["shirt","셔츠",true],["tee","티셔츠"]]);
+  if(cat==="mid") return sel_("xType","형태",[["knit","니트 (셔츠 위 OK)",true],["wants","셔츠 위에 입는 니트 (가디건·V넥)"],["solo","단독 니트 (터틀넥·하프넥)"],["sweat","맨투맨"],["fleece","후리스"]])
+      +sel_("xThick","두께",[["0","얇음",true],["1","보통"],["2","두꺼움"]])+`<div class="checks">${chk("xCrop","기장 짧음",false)}${chk("xCash","캐시미어·고운 니트",false)}</div>`;
+  if(cat==="pants") return sel_("xLen","기장",[["break","브레이크 있음",true],["crop","똑기장"]])+`<div class="checks">${chk("xDenim","데님",false)}${chk("xDress","슬랙스·드레스 바지",false)}</div>`;
+  if(cat==="shoes") return sel_("xType","형태",[["dress","구두·부츠",true],["sneaker","스니커즈"]])+`<div class="checks">${chk("xChunky","앞코 둥글고 볼륨 있음",true)}</div>`;
+  if(cat==="glasses") return sel_("xG","느낌",[["half","단정 (하금태·브로우라인)",true],["round","부드러움 (얇은 금속테)"],["arnel","캐주얼 (뿔테)"]]);
+  if(cat==="acc") return sel_("xType","종류",[["scarf","목도리·머플러",true],["hat","모자"],["gloves","장갑"],["etc","기타"]])
+      +sel_("xAccent","포인트 색 (선택)",[["","없음",true],...Object.entries(FAM).map(([k,v])=>[k,v.ko])]);
+  return "";
+}
+function syncCat(){
+  const cat=$("fCat").value;
+  $("extra").innerHTML=extraFields(cat);
+  $("fFormWrap").hidden=cat==="glasses";
+  fColor.closest(".field").hidden=cat==="glasses";
+}
+$("fCat").addEventListener("change",syncCat);
+
+function renderMine(){
+  $("myWrap").hidden=!custom.length; $("myDivider").hidden=!custom.length;
+  $("myList").innerHTML=custom.map(i=>`<li>${swatch(i)}<span class="t">${esc(i.name)} <span class="hint">· ${CATS.find(c=>c.key===i.cat).short}</span></span><button type="button" class="del" data-del="${i.id}">삭제</button></li>`).join("");
+}
+$("myList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-del]"); if(!b) return;
+  const id=b.dataset.del;
+  custom=custom.filter(i=>i.id!==id);
+  for(const k in sel) if(sel[k]===id) sel[k]=null;
+  persist(); rebuild(); renderMine(); render();
+});
+function persist(){
+  try{ localStorage.setItem(STORE_KEY,JSON.stringify(custom)); return true; }catch(e){ return false; }
+}
+function openAdd(){
+  $("overlay").hidden=false;
+  $("fName").value=""; $("fNote").value="";
+  photoState={hex:null,thumb:null,name:null}; $("hexInput").value=""; $("hexPicker").value="#808080";
+  $("preview").hidden=true; $("detect").hidden=true; $("photoInput").value="";
+  $("saveHint").textContent=storageOk?"추가한 옷은 이 기기의 브라우저에 저장돼요.":"이 화면에서는 저장이 막혀 있어, 새로고침하면 추가한 옷이 사라져요.";
+  syncCat(); renderMine();
+  setTimeout(()=>$("fCat").focus(),30);
+}
+function closeAdd(){ $("overlay").hidden=true; }
+$("closeAdd").addEventListener("click",closeAdd);
+$("overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closeAdd(); });
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("overlay").hidden) closeAdd(); ["wearOv","histOv"].forEach(id=>{$(id).hidden=true;}); });
+
+$("saveAdd").addEventListener("click",()=>{
+  const cat=$("fCat").value;
+  const color=cat==="glasses"?"none":fColor.value;
+  let name=$("fName").value.trim();
+  if(color==="custom"&&!photoState.hex){ toast("포인트 색은 사진이나 색 코드로 색을 먼저 정해 주세요."); return; }
+  if(!name) name=(color==="custom"?(photoState.name||"포인트")+" ":color!=="none"?FAM[color].ko+" ":"")+({outer:"아우터",base:"셔츠·티",mid:"니트",pants:"바지",shoes:"신발",glasses:"안경",acc:"액세서리"}[cat]);
+  const it={id:"c_"+Date.now().toString(36), cat, name, color, custom:true, note:$("fNote").value.trim()};
+  if(photoState.hex&&cat!=="glasses") it.hex=photoState.hex;
+  if(photoState.thumb) it.thumb=photoState.thumb;
+  if(cat!=="glasses") it.form=+$("fForm").value;
+  const v=id=>{const el=document.getElementById(id);return el?(el.type==="checkbox"?el.checked:el.value):null;};
+  if(cat==="outer"){ it.long=v("xLen")==="long"; it.shortOuter=!it.long; it.maxThick=v("xThick")?2:1; it.casual=it.form===0; it.short=name; }
+  if(cat==="base"){ it.shirt=v("xType")==="shirt"; it.tee=!it.shirt; it.blue=it.shirt&&color==="lightblue"; }
+  if(cat==="mid"){ const t=v("xType"); it.thick=+v("xThick"); it.cropped=v("xCrop"); it.cashmere=v("xCash");
+    it.wantsShirt=t==="wants"; it.noShirt=t==="solo"; it.sweat=t==="sweat"; it.fleece=t==="fleece"; if(it.fleece&&it.thick<2) it.thick=2; it.short=name; }
+  if(cat==="pants"){ it.croppedPants=v("xLen")==="crop"; it.denim=v("xDenim"); it.dressy=v("xDress")||(it.form===3&&!it.croppedPants); if(it.denim&&it.form>1) it.form=1; }
+  if(cat==="shoes"){ it.sneaker=v("xType")==="sneaker"; it.chunky=v("xChunky"); }
+  if(cat==="glasses"){ it.gstyle=v("xG"); }
+  if(cat==="acc"){ const t=v("xType"); it.scarf=t==="scarf"; it.short=name; if(v("xAccent")) it.accent=v("xAccent"); }
+  custom.push(it);
+  const ok=persist();
+  rebuild(); renderMine(); render();
+  closeAdd();
+  toast(`${name}을(를) 추가했어요.${ok?"":" (저장은 안 됨)"}`);
+  const el=document.getElementById("sec-"+cat); if(el) el.scrollIntoView({block:"start"});
+});
+
+/* 색 읽기 */
+function hexToRgb(h){h=h.replace("#","");return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgbToHex(r,g,b){return "#"+[r,g,b].map(x=>Math.round(x).toString(16).padStart(2,"0")).join("");}
+function rgbToLab(r,g,b){
+  [r,g,b]=[r,g,b].map(v=>{v/=255;return v>0.04045?Math.pow((v+0.055)/1.055,2.4):v/12.92;});
+  let x=(r*0.4124+g*0.3576+b*0.1805)/0.95047, y=(r*0.2126+g*0.7152+b*0.0722), z=(r*0.0193+g*0.1192+b*0.9505)/1.08883;
+  const f=t=>t>0.008856?Math.cbrt(t):(7.787*t+16/116);
+  x=f(x);y=f(y);z=f(z);
+  return [116*y-16,500*(x-y),200*(y-z)];
+}
+const REFS=[]; Object.entries(FAM).forEach(([k,v])=>v.refs.forEach(h=>REFS.push({k,lab:rgbToLab(...hexToRgb(h))})));
+const NAMED=[
+ ["검정","#1a1a1a"],["먹색","#2b2b2b"],["차콜","#4a4d52"],["슬레이트 그레이","#6f7378"],["미디엄 그레이","#8b8f94"],["라이트 그레이","#b9bbbd"],["실버 그레이","#cfd1d3"],
+ ["오프화이트","#f5f5f2"],["화이트","#ffffff"],["에크루","#ece4d2"],["크림","#f3ead3"],["오트밀","#ddd2bc"],["샌드 베이지","#cdb894"],["베이지","#d8c6a5"],["토프","#8b7d6b"],
+ ["카멜","#b8875a"],["탠","#c19a6b"],["코냑","#8a4b2a"],["초콜릿 브라운","#4a3324"],["다크 브라운","#5a3b28"],["브라운","#7a5236"],["모카","#6b4a32"],
+ ["카키","#a89b6c"],["올리브","#5f6440"],["올리브 드랍","#6b6b3f"],["세이지","#a3ad8e"],["회녹색","#8c958a"],["포레스트 그린","#2c4a35"],["보틀 그린","#2f5a3c"],["헌터 그린","#3f6a4a"],["민트","#a8d5c2"],
+ ["틸","#2f6f73"],["피콕 블루","#2a5f63"],["네이비","#1f2a44"],["미드나잇 네이비","#1b2233"],["인디고","#2e3f5f"],["진청","#33476b"],["연청","#8fa9c6"],["아이스 블루","#cddcec"],["스카이 블루","#a9c7e3"],["파우더 블루","#bcd4ea"],["로열 블루","#2f5aa8"],["코발트","#1f4fa0"],
+ ["버건디","#6e2b2b"],["와인","#5a1f24"],["옥스블러드","#4e1c20"],["레드","#b3262e"],["체리","#9e1f27"],["러스트","#a4532e"],["테라코타","#c06b45"],["벽돌색","#8f4527"],["오렌지","#d9772b"],["피치","#f0b48a"],
+ ["머스터드","#c99a2e"],["골드","#b8891f"],["옐로","#e8c547"],["레몬","#f0d35c"],["핑크","#e3a7b4"],["더스티 핑크","#d9a0a6"],["로즈","#c7707e"],["라벤더","#b9a7cf"],["퍼플","#5d3f74"],["플럼","#4b315f"]
+];
+const NAMED_LAB=NAMED.map(([n,h])=>({n,h,lab:rgbToLab(...hexToRgb(h))}));
+function nearestName(r,g,b){const L=rgbToLab(r,g,b);let best=NAMED_LAB[0],bd=1e9;for(const x of NAMED_LAB){const d=Math.hypot(L[0]-x.lab[0],L[1]-x.lab[1],L[2]-x.lab[2]);if(d<bd){bd=d;best=x;}}return best.n;}
+function nearestFamDist(r,g,b){
+  const L=rgbToLab(r,g,b); let best=null,bd=1e9;
+  for(const ref of REFS){const d=Math.hypot(L[0]-ref.lab[0],L[1]-ref.lab[1],L[2]-ref.lab[2]); if(d<bd){bd=d;best=ref.k;}}
+  return {k:best,d:bd};
+}
+function nearestFam(r,g,b){
+  const L=rgbToLab(r,g,b); let best=null,bd=1e9;
+  for(const ref of REFS){const d=Math.hypot(L[0]-ref.lab[0],L[1]-ref.lab[1],L[2]-ref.lab[2]); if(d<bd){bd=d;best=ref.k;}}
+  return best;
+}
+function dominant(ctx,x0,y0,w,h){
+  const data=ctx.getImageData(x0,y0,w,h).data, buckets=new Map();
+  for(let i=0;i<data.length;i+=4){
+    if(data[i+3]<200) continue;
+    const r=data[i],g=data[i+1],b=data[i+2];
+    const key=(r>>4)<<8|(g>>4)<<4|(b>>4);
+    let e=buckets.get(key); if(!e){e={n:0,r:0,g:0,b:0};buckets.set(key,e);}
+    e.n++;e.r+=r;e.g+=g;e.b+=b;
+  }
+  let top=null; for(const e of buckets.values()) if(!top||e.n>top.n) top=e;
+  if(!top) return null;
+  return [top.r/top.n,top.g/top.n,top.b/top.n];
+}
+function applyColor(rgb,fromInput){
+  if(!rgb) return;
+  const hex=rgbToHex(...rgb), nf=nearestFamDist(...rgb), nm=nearestName(...rgb);
+  photoState.hex=hex; photoState.name=nm;
+  const far=nf.d>16;
+  $("detSw").style.background=hex;
+  $("detHex").textContent=`${nm} · ${hex.toUpperCase()}`;
+  $("detFam").textContent=far?"가까운 계열이 없어 '포인트 색'으로 저장해요. 어울림은 색 이론으로 계산해요.":`계열: ${FAM[nf.k].ko}`;
+  fColor.value=far?"custom":nf.k; $("detect").hidden=false;
+  if(!fromInput){ $("hexInput").value=hex.toUpperCase(); $("hexPicker").value=hex; }
+}
+function hexFromText(t){ t=t.trim().replace(/^#?/,"#"); return /^#[0-9a-fA-F]{6}$/.test(t)?t.toLowerCase():null; }
+$("hexInput").addEventListener("input",e=>{ const h=hexFromText(e.target.value); if(h){ $("hexPicker").value=h; applyColor(hexToRgb(h),true); } });
+$("hexPicker").addEventListener("input",e=>{ const h=e.target.value; $("hexInput").value=h.toUpperCase(); applyColor(hexToRgb(h),true); });
+$("photoInput").addEventListener("change",e=>{
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  const url=URL.createObjectURL(file); const img=new Image();
+  img.onload=()=>{
+    const cv=$("preview"), max=440, sc=Math.min(1,max/Math.max(img.width,img.height));
+    cv.width=Math.round(img.width*sc); cv.height=Math.round(img.height*sc);
+    const ctx=cv.getContext("2d",{willReadFrequently:true});
+    ctx.drawImage(img,0,0,cv.width,cv.height);
+    cv.hidden=false;
+    const w=Math.round(cv.width*0.4), h=Math.round(cv.height*0.4);
+    applyColor(dominant(ctx,Math.round((cv.width-w)/2),Math.round((cv.height-h)/2),w,h));
+    const t=document.createElement("canvas"), ts=64; t.width=ts; t.height=ts;
+    const s=Math.min(img.width,img.height);
+    t.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,ts,ts);
+    try{ photoState.thumb=t.toDataURL("image/jpeg",0.7); }catch(err){ photoState.thumb=null; }
+    URL.revokeObjectURL(url);
+  };
+  img.onerror=()=>{ toast("사진을 읽지 못했어요. 다른 사진으로 해 보세요."); };
+  img.src=url;
+});
+$("preview").addEventListener("click",e=>{
+  const cv=e.currentTarget, rect=cv.getBoundingClientRect();
+  const x=Math.round((e.clientX-rect.left)*cv.width/rect.width), y=Math.round((e.clientY-rect.top)*cv.height/rect.height);
+  const r=Math.max(4,Math.round(cv.width*0.03));
+  const ctx=cv.getContext("2d",{willReadFrequently:true});
+  const x0=Math.max(0,x-r), y0=Math.max(0,y-r);
+  applyColor(dominant(ctx,x0,y0,Math.min(r*2,cv.width-x0),Math.min(r*2,cv.height-y0)));
+});
+
+/* ---------- 입은 기록 ---------- */
+const LOG_KEY="wardrobe.log.v1";
+let wearLog=[];
+try{ wearLog=JSON.parse(localStorage.getItem(LOG_KEY)||"[]"); }catch(e){ wearLog=[]; }
+const saveLog=()=>{ try{ localStorage.setItem(LOG_KEY,JSON.stringify(wearLog)); return true; }catch(e){ return false; } };
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayStr=()=>ymd(new Date());
+const parseD=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);};
+const WD="일월화수목금토";
+const fmtD=s=>{const d=parseD(s);return `${d.getMonth()+1}/${d.getDate()} (${WD[d.getDay()]})`;};
+const daysBetween=(a,b)=>Math.round((parseD(b)-parseD(a))/86400000);
+
+function prevWorn(){
+  const t=todayStr();
+  const prev=wearLog.filter(e=>e.date<t).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(!prev) return {ids:new Set(),label:""};
+  const gap=daysBetween(prev.date,t);
+  const label=gap===1?"어제":fmtD(prev.date).split(" ")[0];
+  return {ids:new Set(Object.values(prev.items).filter(Boolean)),label,date:prev.date};
+}
+const itemName=(id,fallback)=>BY[id]?BY[id].name:(fallback||"(지운 옷)");
+
+function openWear(){
+  const n=CATS.filter(c=>sel[c.key]).length;
+  if(!n){ toast("먼저 오늘 입은 옷을 골라 주세요."); return; }
+  $("wearDate").value=todayStr();
+  $("wearSum").innerHTML=CATS.map(c=>`<li><span class="k">${c.short}</span><span>${get(sel[c.key])?esc(get(sel[c.key]).name):'-'}</span></li>`).join("");
+  updWearHint();
+  $("wearOv").hidden=false;
+}
+function updWearHint(){
+  const d=$("wearDate").value, ex=wearLog.find(e=>e.date===d);
+  const pr=problems(sel);
+  $("wearHint").textContent=(ex?`${fmtD(d)} 기록이 이미 있어요. 저장하면 이 코디로 바뀌어요. `:"")+(pr.length?"안 맞는 조합이 있지만 그대로 저장할 수 있어요.":"");
+}
+$("wearDate").addEventListener("change",updWearHint);
+$("wearSave").addEventListener("click",()=>{
+  const d=$("wearDate").value; if(!d){ toast("날짜를 골라 주세요."); return; }
+  const items={}, names={};
+  CATS.forEach(c=>{ items[c.key]=sel[c.key]||null; if(sel[c.key]) names[c.key]=get(sel[c.key]).name; });
+  wearLog=wearLog.filter(e=>e.date!==d);
+  wearLog.push({date:d,items,names});
+  wearLog.sort((a,b)=>b.date.localeCompare(a.date));
+  const ok=saveLog();
+  $("wearOv").hidden=true;
+  toast(`${fmtD(d)} 코디를 저장했어요.${ok?"":" (저장은 안 됨)"}`);
+  render();
+});
+
+let histTab="log";
+function openHist(){ histTab="log"; renderHist(); $("bkArea").hidden=true; $("histOv").hidden=false; }
+$("histTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-tab]"); if(!b) return; histTab=b.dataset.tab; renderHist(); });
+const catShort=it=>CATS.find(c=>c.key===it.cat).short;
+function renderHist(){
+  [...$("histTabs").children].forEach(b=>b.classList.toggle("on",b.dataset.tab===histTab));
+  const body=$("histBody");
+  if(!wearLog.length){ body.innerHTML='<p class="empty-msg">아직 저장한 날이 없어요. 코디를 고르고 아래 [입었어요]를 누르세요.</p>'; return; }
+  if(histTab==="log"){
+    body.innerHTML=`<ul class="log">${wearLog.map(e=>`<li><div class="d"><b>${fmtD(e.date)}</b><span class="acts"><button class="mini" type="button" data-load="${e.date}">불러오기</button><button class="mini red" type="button" data-rm="${e.date}">삭제</button></span></div>
+      <div class="items">${CATS.filter(c=>e.items[c.key]).map(c=>esc(itemName(e.items[c.key],e.names&&e.names[c.key]))).join(" · ")}</div></li>`).join("")}</ul>`;
+    return;
+  }
+  const t=todayStr(), since=ymd(new Date(Date.now()-29*86400000));
+  if(histTab==="stat"){
+    const cnt={};
+    wearLog.filter(e=>e.date>=since&&e.date<=t).forEach(e=>Object.values(e.items).forEach(id=>{ if(id&&BY[id]&&!BY[id].none) cnt[id]=(cnt[id]||0)+1; }));
+    const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,15);
+    if(!rows.length){ body.innerHTML='<p class="empty-msg">최근 30일 기록이 없어요.</p>'; return; }
+    const max=rows[0][1];
+    body.innerHTML=`<p class="hint" style="margin-bottom:8px">최근 30일 기준</p><ul class="stat">${rows.map(([id,n])=>`<li><div><div>${esc(BY[id].name)} <span class="s">${catShort(BY[id])}</span></div><div class="bar" style="width:${Math.max(8,n/max*100)}%"></div></div><span class="n">${n}회</span></li>`).join("")}</ul>`;
+    return;
+  }
+  const last={};
+  wearLog.forEach(e=>Object.values(e.items).forEach(id=>{ if(id&&(!last[id]||e.date>last[id])) last[id]=e.date; }));
+  const cand=ITEMS.filter(i=>!i.none&&i.cat!=="glasses").map(i=>({i,d:last[i.id]?daysBetween(last[i.id],t):Infinity}))
+    .sort((a,b)=>b.d-a.d).slice(0,12);
+  body.innerHTML=`<p class="hint" style="margin-bottom:8px">오래 안 입은 순서예요. 누르면 오늘 코디에 넣어요.</p><ul class="stat">${cand.map(x=>`<li><button type="button" class="mini" style="text-align:left;font-weight:600;color:var(--ink)" data-pick="${x.i.id}">${esc(x.i.name)} <span class="s">${catShort(x.i)}</span></button><span class="n">${x.d===Infinity?"기록 없음":x.d+"일 전"}</span></li>`).join("")}</ul>`;
+}
+$("histBody").addEventListener("click",e=>{
+  const ld=e.target.closest("[data-load]"), rm=e.target.closest("[data-rm]"), pk=e.target.closest("[data-pick]");
+  if(ld){ const en=wearLog.find(x=>x.date===ld.dataset.load); if(!en) return;
+    sel={...EMPTY}; CATS.forEach(c=>{ const id=en.items[c.key]; if(id&&BY[id]) sel[c.key]=id; });
+    $("histOv").hidden=true; render(); toast(`${fmtD(en.date)} 코디를 불러왔어요.`); }
+  if(rm){ if(rm.dataset.armed!=="1"){ rm.dataset.armed="1"; rm.textContent="한 번 더"; setTimeout(()=>{ if(rm.isConnected){rm.dataset.armed="";rm.textContent="삭제";} },2500); return; }
+    wearLog=wearLog.filter(x=>x.date!==rm.dataset.rm); saveLog(); renderHist(); render(); }
+  if(pk){ const it=BY[pk.dataset.pick]; if(!it) return; sel={...sel,[it.cat]:it.id}; $("histOv").hidden=true; render(); toast(`${it.name}을(를) 넣었어요.`); }
+});
+document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>{ $(b.dataset.close).hidden=true; }));
+["wearOv","histOv"].forEach(id=>$(id).addEventListener("click",e=>{ if(e.target.id===id) $(id).hidden=true; }));
+
+$("bkCopy").addEventListener("click",async()=>{
+  const txt=JSON.stringify({app:"outfit-picker",v:1,custom,log:wearLog});
+  try{ await navigator.clipboard.writeText(txt); toast("백업 글을 복사했어요. 메모 앱에 붙여넣어 보관하세요."); }
+  catch(err){ $("bkArea").hidden=false; $("bkText").value=txt; $("bkText").select(); toast("자동 복사가 막혀서 아래 칸에 띄웠어요. 길게 눌러 복사하세요."); }
+});
+function applyBackup(d){
+  if(!d||d.app!=="outfit-picker"||!Array.isArray(d.log)||!Array.isArray(d.custom)) throw new Error("bad");
+  custom=d.custom; wearLog=d.log;
+  persist(); saveLog(); rebuild(); renderMine(); renderHist(); render();
+  toast(`복원했어요. 기록 ${wearLog.length}일, 내 옷 ${custom.length}개.`);
+}
+$("bkFile").addEventListener("click",()=>{
+  try{
+    const blob=new Blob([JSON.stringify({app:"outfit-picker",v:1,custom,log:wearLog},null,1)],{type:"application/json"});
+    const url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=`outfit-backup-${todayStr()}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast("백업 파일을 저장했어요.");
+  }catch(err){ toast("파일 저장이 막혔어요. [백업 글 복사]를 써 주세요."); }
+});
+$("bkLoad").addEventListener("click",()=>$("bkInput").click());
+$("bkInput").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ applyBackup(JSON.parse(r.result)); }catch(err){ toast("이 앱의 백업 파일이 아니에요."); } e.target.value=""; };
+  r.onerror=()=>{ toast("파일을 읽지 못했어요."); e.target.value=""; };
+  r.readAsText(f);
+});
+$("bkShow").addEventListener("click",()=>{ $("bkArea").hidden=!$("bkArea").hidden; $("bkText").value=""; });
+$("bkApply").addEventListener("click",()=>{
+  try{
+    const d=JSON.parse($("bkText").value.trim());
+    if(!d||d.app!=="outfit-picker"||!Array.isArray(d.log)||!Array.isArray(d.custom)) throw new Error("bad");
+    custom=d.custom; wearLog=d.log;
+    persist(); saveLog(); rebuild(); renderMine(); renderHist(); render();
+    $("bkArea").hidden=true; toast(`복원했어요. 기록 ${wearLog.length}일, 내 옷 ${custom.length}개.`);
+  }catch(err){ toast("백업 글이 아니에요. 복사한 내용을 통째로 붙여넣어 주세요."); }
+});
+
+render();
+</script>
+</body>
+</html>
