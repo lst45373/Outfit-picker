@@ -141,6 +141,7 @@ section.cat{background:var(--card);border:1px solid var(--line);border-radius:16
 
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:60}
 .overlay[hidden]{display:none}
+#overlay{z-index:70}
 .sheet{background:var(--card);width:100%;max-width:448px;max-height:92%;overflow:auto;overscroll-behavior:contain;border-radius:16px 16px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.25)}
 @media (min-width:640px){.overlay{align-items:center}.sheet{border-radius:16px;max-width:384px}}
 .sheet-head{display:flex;justify-content:space-between;align-items:flex-start}
@@ -195,6 +196,9 @@ section.cat{background:var(--card);border:1px solid var(--line);border-radius:16
 textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:var(--soft);border-radius:12px;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
 .row-btns{display:flex;gap:8px;flex-wrap:wrap}
 #bkArea:not([hidden]){display:flex;flex-direction:column;gap:8px}
+.closet-group{margin-bottom:12px}
+.closet-group h4{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:700}
+.closet-group .cnt{color:var(--faint);font-weight:500}
 .divider{border:0;border-top:1px solid var(--line2);margin:0}
 @media (prefers-reduced-motion: reduce){.chip,.bbtn,.save{transition:none}.chip:active,.bbtn:active,.save:active{transform:none}}
 </style>
@@ -207,7 +211,7 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
         <h1>오늘의 <span>코디</span></h1>
         <p class="sub">하나 고르면 나머지를 추천해 드려요</p>
       </div>
-      <div style="display:flex;gap:6px"><button class="hbtn" type="button" data-act="add">+ 옷</button><button class="hbtn" type="button" data-act="reset">초기화</button><button class="hbtn" type="button" data-act="copy">복사</button></div>
+      <div style="display:flex;gap:6px"><button class="hbtn" type="button" data-act="closet">옷장</button><button class="hbtn" type="button" data-act="reset">초기화</button><button class="hbtn" type="button" data-act="copy">복사</button></div>
     </div>
     <nav class="tabs" id="tabs" aria-label="카테고리로 이동"></nav>
   </header>
@@ -217,6 +221,11 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
       <div class="hero-top"><span class="pill" id="progress"></span><span class="pill" id="statePill" hidden></span></div>
       <h2>오늘 코디</h2>
       <ul class="slots" id="slots"></ul>
+    </div>
+    <div class="note-box tips" id="onboard" hidden style="gap:8px">
+      <b style="color:var(--ink-strong)">예시 옷장이 들어 있어요</b>
+      <span>내 옷으로 쓰려면 비우고 하나씩 추가하거나, [옷장]에서 필요 없는 옷만 지우세요.</span>
+      <div class="row-btns"><button class="mini" type="button" id="obClear">비우고 시작</button><button class="mini" type="button" id="obKeep">예시로 계속</button></div>
     </div>
     <ul class="note-box problems" id="problems" hidden></ul>
     <ul class="note-box tips" id="tips" hidden></ul>
@@ -234,7 +243,7 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
 
 <div class="overlay" id="overlay" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
-    <div class="sheet-head"><div><span class="eyebrow">ADD</span><h2 id="addTitle">옷 추가</h2></div><button class="x" type="button" id="closeAdd" aria-label="닫기">×</button></div>
+    <div class="sheet-head"><div><span class="eyebrow" id="addEyebrow">ADD</span><h2 id="addTitle">옷 추가</h2></div><button class="x" type="button" id="closeAdd" aria-label="닫기">×</button></div>
 
     <div class="field">
       <span class="lbl">사진 <span class="hint" style="display:inline">(선택)</span></span>
@@ -274,10 +283,19 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
     <button class="save" type="button" id="saveAdd">추가하기</button>
     <p class="hint" id="saveHint"></p>
 
-    <hr class="divider" id="myDivider" hidden>
-    <div class="field" id="myWrap" hidden>
-      <span class="lbl">내가 추가한 옷</span>
-      <ul class="mylist" id="myList"></ul>
+  </div>
+</div>
+
+<div class="overlay" id="closetOv" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="closetTitle">
+    <div class="sheet-head"><div><span class="eyebrow">CLOSET</span><h2 id="closetTitle">내 옷장</h2></div><button class="x" type="button" data-close="closetOv" aria-label="닫기">×</button></div>
+    <button class="save" type="button" data-act="add">+ 새 옷 추가</button>
+    <div id="closetBody"></div>
+    <hr class="divider">
+    <div class="field">
+      <span class="lbl">옷장 전체</span>
+      <p class="hint">'비우기'는 옷장 아이템만 지워요. 입은 기록은 남아요. 잘못 누를까 봐 두 번 눌러야 실행돼요.</p>
+      <div class="row-btns"><button class="mini" type="button" id="seedBtn">예시 옷장으로 바꾸기</button><button class="mini red" type="button" id="clearBtn">옷장 비우기</button></div>
     </div>
   </div>
 </div>
@@ -352,12 +370,12 @@ const CATS = [
   {key:"acc", label:"액세서리 (목도리 등)", short:"소품"}
 ];
 
-const BASE_ITEMS = [
+const SEED_RAW = [
   {id:"coat_black", cat:"outer", name:"검은 캐시미어 싱글코트", short:"캐시미어 코트", color:"black", form:3, maxThick:1, long:true, strict:true, note:"검은 울·네이비 2턱만"},
   {id:"balmacaan", cat:"outer", name:"도네갈 발마칸", short:"발마칸", color:"beige", form:2, maxThick:2, long:true, note:"품 넉넉, 두꺼운 니트 OK"},
   {id:"donegal_bw", cat:"outer", name:"흑백 도네갈", short:"흑백 도네갈", color:"grey", form:2, maxThick:1, note:"회색 톤온톤"},
   {id:"hunting", cat:"outer", name:"네이비 해리스트위드 헌팅코트", short:"헌팅코트", color:"navy", form:2, maxThick:1, note:"짧은 기장, 얇은 이너"},
-  {id:"maxi", cat:"outer", name:"갈색 트위드 맥시", short:"트위드 맥시", color:"brown", form:2, maxThick:1, long:true, note:"슬림, 얇은 이너만"},
+  {id:"maxi", cat:"outer", name:"갈색 트위드 맥시", short:"트위드 맥시", color:"brown", form:2, maxThick:1, long:true, tweed:true, note:"슬림, 얇은 이너만"},
   {id:"padding", cat:"outer", name:"검은 숏패딩", short:"숏패딩", color:"black", form:0, maxThick:2, casual:true, shortOuter:true, note:"주말·한파"},
   {id:"outer_none", cat:"outer", name:"아우터 없음", short:"아우터 없음", color:"none", maxThick:2, none:true, shortOuter:true, note:"실내·간절기"},
 
@@ -418,15 +436,26 @@ const BASE_ITEMS = [
 ];
 
 const GREEN_FAMS = ["green","sage","olive"];
-const STORE_KEY = "wardrobe.custom.v1";
-let custom = [];
-try{ custom = JSON.parse(localStorage.getItem(STORE_KEY)||"[]"); }catch(e){ custom = []; }
+/* 옷 데이터: '없음' 같은 시스템 항목만 고정, 나머지는 전부 사용자 옷장(로컬 저장)에 들어감.
+   처음 열면 예시 옷장(SEED)으로 채우고, 사용자가 전부 지우거나 고칠 수 있음 */
+const SYSTEM_ITEMS = SEED_RAW.filter(i=>i.none);
+const SEED_ITEMS = SEED_RAW.filter(i=>!i.none);
+const seedCopy = () => JSON.parse(JSON.stringify(SEED_ITEMS));
+const ITEMS_KEY = "wardrobe.items.v2", OLD_KEY = "wardrobe.custom.v1", ONBOARD_KEY = "wardrobe.onboarded";
 let storageOk = true;
 try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); }catch(e){ storageOk=false; }
+let wardrobe = null, firstRun = false;
+try{ const raw=localStorage.getItem(ITEMS_KEY); if(raw) wardrobe=JSON.parse(raw); }catch(e){}
+if(!Array.isArray(wardrobe)){
+  let old=[]; try{ old=JSON.parse(localStorage.getItem(OLD_KEY)||"[]"); }catch(e){}
+  wardrobe=[...seedCopy(), ...(Array.isArray(old)?old:[])];
+  try{ localStorage.setItem(ITEMS_KEY,JSON.stringify(wardrobe)); }catch(e){}
+  try{ firstRun = !localStorage.getItem(ONBOARD_KEY) && !(Array.isArray(old)&&old.length); }catch(e){ firstRun=true; }
+}
 
 let ITEMS=[], BY={};
 function rebuild(){
-  ITEMS=[...BASE_ITEMS, ...custom];
+  ITEMS=[...wardrobe, ...SYSTEM_ITEMS];
   ITEMS.forEach(i=>{ if(i.cat==="mid"||i.cat==="pants") i.green = GREEN_FAMS.includes(i.color)||(i.color==="custom"&&i.hex&&(()=>{const c=lchOf(i.hex);return c.C>=14&&c.h>=100&&c.h<=170;})()); });
   BY=Object.fromEntries(ITEMS.map(i=>[i.id,i]));
 }
@@ -472,7 +501,7 @@ function affPair(ka,ha,kb,hb){
 const affItems=(x,y)=>affPair(x.color,x.color==="custom"?x.hex:null,y.color,y.color==="custom"?y.hex:null);
 
 const EMPTY={outer:null,base:null,mid:null,pants:null,shoes:null,glasses:null,acc:null};
-let sel={...EMPTY, pants:"hbt"};
+let sel={...EMPTY}; if(BY.hbt) sel.pants="hbt";
 const get=id=>id?BY[id]:null;
 const nm=i=>i.short||i.name;
 
@@ -504,7 +533,7 @@ function glassScore(it,s){
   const strict=!!(o&&o.strict);
   if(it.gstyle==="half") return (shirt?3:0)+(o&&!o.none&&!o.casual&&!o.strict?1:0)-(casual?2:0)-(strict?1:0);
   if(it.gstyle==="round") return (strict?3:0)+(m&&m.noShirt?3:0)+(m&&m.cashmere&&!shirt?1:0)-(casual?1:0);
-  if(it.gstyle==="arnel") return (casual?3:0)+(o&&o.id==="maxi"?1:0)+(m&&(m.textured||m.collarOut)?1:0)-(shirt&&!casual?1:0);
+  if(it.gstyle==="arnel") return (casual?3:0)+(o&&o.tweed?1:0)+(m&&(m.textured||m.collarOut)?1:0)-(shirt&&!casual?1:0);
   return 0;
 }
 function score(cat,id,s){
@@ -554,6 +583,13 @@ function fill(jitter){
   sel=s; render();
 }
 
+const LCACHE=new Map();
+function lightOf(it){
+  const h=it.hex||(FAM[it.color]?FAM[it.color].hex:null);
+  if(!h) return -1;
+  if(!LCACHE.has(h)) LCACHE.set(h,rgbToLab(...hexToRgb(h))[0]);
+  return LCACHE.get(h);
+}
 function swatch(it){
   if(it.thumb) return `<img class="thumb" src="${it.thumb}" alt="">`;
   if(it.color==="none") return "";
@@ -584,7 +620,7 @@ function render(){
   if(o&&o.long) tips.push("많이 추운 날엔 경량패딩을 코트 안에 받쳐 입으세요.");
   if(m&&m.collarOut&&b&&b.shirt) tips.push("지퍼를 조금 내리고 셔츠 깃을 밖으로 꺼내 입으세요.");
   if(b&&b.mustCoverWithGreen&&p&&p.green&&m&&!m.none) tips.push("회녹색 티는 목선만 살짝 보이게 덮어 입으세요.");
-  if(b&&b.id==="tee_white"&&m&&!m.none&&["black","navy","charcoal"].includes(m.color)) tips.push("흰 티가 소매·밑단으로 살짝 보이면 더 산뜻해요.");
+  if(b&&b.tee&&b.color==="white"&&m&&!m.none&&["black","navy","charcoal"].includes(m.color)) tips.push("흰 티가 소매·밑단으로 살짝 보이면 더 산뜻해요.");
   const ac=get(sel.acc), sh0=get(sel.shoes);
   if(ac&&ac.accent&&[sh0,m,p,b].some(x=>x&&x.color===ac.accent)) tips.push(`${ac.short||ac.name} 끝의 ${FAM[ac.accent].ko} 줄이 ${[sh0,m,p,b].find(x=>x&&x.color===ac.accent).name}와(과) 이어져요.`);
   if(ac&&ac.scarf&&m&&m.noShirt) tips.push("목이 올라오는 니트라 목도리는 느슨하게 한 번만 두르세요.");
@@ -602,22 +638,27 @@ function render(){
       list.filter(x=>!x.blocked&&!x.it.none&&!pw.ids.has(x.it.id)).sort((a,b)=>b.sc-a.sc).slice(0,2)
         .forEach(x=>{ if(x.sc>0||c.key==="glasses") recIds.add(x.it.id); });
     }
+    // 정렬: 선택 → 추천 → 밝은 색부터 어두운 색 순, 안 맞는 옷과 '없음'은 뒤로
     const order=[...list].sort((a,b)=>{
       const as=sel[c.key]===a.it.id, bs=sel[c.key]===b.it.id;
       if(as!==bs) return as?-1:1;
+      const ar=recIds.has(a.it.id), br=recIds.has(b.it.id);
+      if(ar!==br) return ar?-1:1;
       if(!!a.blocked!==!!b.blocked) return a.blocked?1:-1;
-      return anyPicked?b.sc-a.sc:0;
+      if(!!a.it.none!==!!b.it.none) return a.it.none?1:-1;
+      return lightOf(b.it)-lightOf(a.it);
     });
     const cur=get(sel[c.key]);
     return `<section class="cat" id="sec-${c.key}" aria-labelledby="h-${c.key}">
       <div class="cat-head"><h3 id="h-${c.key}">${c.label}</h3><span class="pick">${cur?`<b>${esc(cur.name)}</b>`:(anyPicked?"초록 테두리가 추천":"")}</span></div>
+      ${list.filter(x=>!x.it.none).length?"":`<p class="hint" style="margin:0 0 8px">아직 옷이 없어요. 위쪽 [옷장] → [+ 새 옷 추가]로 넣어 주세요.</p>`}
       <div class="grid">${order.map(x=>{
         const it=x.it, isSel=sel[c.key]===it.id, rec=recIds.has(it.id), bl=x.blocked&&!isSel;
         const cls=["chip",isSel?"sel":"",rec?"rec":"",bl?"blocked":""].join(" ");
         const note=bl?x.blocked:it.note;
         return `<button type="button" class="${cls}" data-cat="${c.key}" data-id="${it.id}" ${bl?'aria-disabled="true"':""} aria-pressed="${isSel}">
           ${isSel?'<span class="badge">선택</span>':rec?'<span class="badge">추천</span>':""}
-          <span class="nm">${swatch(it)}<span>${esc(it.name)}${it.custom?'<span class="mine">내 옷</span>':""}${pw.ids.has(it.id)&&!it.none?`<span class="worn-tag">${pw.label} 입음</span>`:""}</span></span>${note?`<span class="nt">${esc(note)}</span>`:""}</button>`;
+          <span class="nm">${swatch(it)}<span>${esc(it.name)}${pw.ids.has(it.id)&&!it.none?`<span class="worn-tag">${pw.label} 입음</span>`:""}</span></span>${note?`<span class="nt">${esc(note)}</span>`:""}</button>`;
       }).join("")}</div></section>`;
   }).join("");
 }
@@ -643,7 +684,7 @@ document.addEventListener("click",async e=>{
   if(a==="random"){
     sel={...EMPTY};
     const pw0=prevWorn(); const pl=ITEMS.filter(i=>i.cat==="pants"&&!pw0.ids.has(i.id));
-    sel.pants=pl[Math.floor(Math.random()*pl.length)].id;
+    if(pl.length) sel.pants=pl[Math.floor(Math.random()*pl.length)].id;
     fill(2.5);
   }
   if(a==="reset"){ sel={...EMPTY}; render(); }
@@ -653,6 +694,7 @@ document.addEventListener("click",async e=>{
     catch(err){ toast("복사가 막혔어요. 목록을 길게 눌러 복사하세요."); }
   }
   if(a==="add") openAdd();
+  if(a==="closet") openCloset();
   if(a==="wear") openWear();
   if(a==="history") openHist();
 });
@@ -666,7 +708,7 @@ let photoState={hex:null, thumb:null};
 function extraFields(cat){
   const chk=(id,label,checked)=>`<label><input type="checkbox" id="${id}" ${checked?"checked":""}> ${label}</label>`;
   const sel_=(id,label,opts)=>`<div class="field"><label for="${id}">${label}</label><select id="${id}">${opts.map(([v,t,s])=>`<option value="${v}" ${s?"selected":""}>${t}</option>`).join("")}</select></div>`;
-  if(cat==="outer") return sel_("xLen","기장",[["short","짧음 (재킷·패딩)"],["long","김 (코트)",true]])+`<div class="checks">${chk("xThick","안에 두꺼운 니트도 들어감",false)}</div>`;
+  if(cat==="outer") return sel_("xLen","기장",[["short","짧음 (재킷·패딩)"],["long","김 (코트)",true]])+`<div class="checks">${chk("xThick","안에 두꺼운 니트도 들어감",false)}${chk("xStrict","포멀 코트 (드레스 바지·구두만)",false)}</div>`;
   if(cat==="base") return sel_("xType","형태",[["shirt","셔츠",true],["tee","티셔츠"]]);
   if(cat==="mid") return sel_("xType","형태",[["knit","니트 (셔츠 위 OK)",true],["wants","셔츠 위에 입는 니트 (가디건·V넥)"],["solo","단독 니트 (터틀넥·하프넥)"],["sweat","맨투맨"],["fleece","후리스"]])
       +sel_("xThick","두께",[["0","얇음",true],["1","보통"],["2","두꺼움"]])+`<div class="checks">${chk("xCrop","기장 짧음",false)}${chk("xCash","캐시미어·고운 니트",false)}</div>`;
@@ -685,33 +727,44 @@ function syncCat(){
 }
 $("fCat").addEventListener("change",syncCat);
 
-function renderMine(){
-  $("myWrap").hidden=!custom.length; $("myDivider").hidden=!custom.length;
-  $("myList").innerHTML=custom.map(i=>`<li>${swatch(i)}<span class="t">${esc(i.name)} <span class="hint">· ${CATS.find(c=>c.key===i.cat).short}</span></span><button type="button" class="del" data-del="${i.id}">삭제</button></li>`).join("");
-}
-$("myList").addEventListener("click",e=>{
-  const b=e.target.closest("[data-del]"); if(!b) return;
-  const id=b.dataset.del;
-  custom=custom.filter(i=>i.id!==id);
-  for(const k in sel) if(sel[k]===id) sel[k]=null;
-  persist(); rebuild(); renderMine(); render();
-});
+function renderMine(){ if(!$("closetOv").hidden) renderCloset(); }
 function persist(){
-  try{ localStorage.setItem(STORE_KEY,JSON.stringify(custom)); return true; }catch(e){ return false; }
+  try{ localStorage.setItem(ITEMS_KEY,JSON.stringify(wardrobe)); localStorage.setItem(ONBOARD_KEY,"1"); return true; }catch(e){ return false; }
 }
-function openAdd(){
+let editingId=null;
+function openAdd(editId){
+  editingId=editId||null;
+  const it=editingId?wardrobe.find(i=>i.id===editingId):null;
   $("overlay").hidden=false;
-  $("fName").value=""; $("fNote").value="";
-  photoState={hex:null,thumb:null,name:null}; $("hexInput").value=""; $("hexPicker").value="#808080";
+  $("addTitle").textContent=it?"옷 수정":"옷 추가"; $("addEyebrow").textContent=it?"EDIT":"ADD";
+  $("saveAdd").textContent=it?"수정하기":"추가하기";
+  $("fName").value=it?it.name:""; $("fNote").value=it?(it.note||""):"";
+  photoState={hex:it&&it.hex||null,thumb:it&&it.thumb||null,name:null};
+  $("hexInput").value=it&&it.hex?it.hex.toUpperCase():""; $("hexPicker").value=it&&it.hex?it.hex:"#808080";
   $("preview").hidden=true; $("detect").hidden=true; $("photoInput").value="";
-  $("saveHint").textContent=storageOk?"추가한 옷은 이 기기의 브라우저에 저장돼요.":"이 화면에서는 저장이 막혀 있어, 새로고침하면 추가한 옷이 사라져요.";
-  syncCat(); renderMine();
+  $("saveHint").textContent=storageOk?"옷장은 이 기기의 브라우저에 저장돼요.":"이 화면에서는 저장이 막혀 있어, 새로고침하면 바뀐 내용이 사라져요.";
+  $("fCat").value=it?it.cat:"mid";
+  syncCat();
+  if(it) fillForm(it);
   setTimeout(()=>$("fCat").focus(),30);
+}
+function fillForm(it){
+  const set=(id,v)=>{const el=document.getElementById(id); if(!el) return; if(el.type==="checkbox") el.checked=!!v; else el.value=v;};
+  if(it.cat!=="glasses") fColor.value=FAM[it.color]||it.color==="custom"?it.color:"grey";
+  if(it.form!=null) $("fForm").value=String(Math.max(0,Math.min(3,it.form)));
+  if(it.cat==="outer"){ set("xLen",it.long?"long":"short"); set("xThick",it.maxThick>=2); set("xStrict",it.strict); }
+  if(it.cat==="base") set("xType",it.shirt?"shirt":"tee");
+  if(it.cat==="mid"){ set("xType",it.fleece?"fleece":it.sweat?"sweat":it.noShirt?"solo":it.wantsShirt?"wants":"knit"); set("xThick",String(it.thick||0)); set("xCrop",it.cropped); set("xCash",it.cashmere); }
+  if(it.cat==="pants"){ set("xLen",it.croppedPants?"crop":"break"); set("xDenim",it.denim); set("xDress",it.dressy); }
+  if(it.cat==="shoes"){ set("xType",it.sneaker?"sneaker":"dress"); set("xChunky",it.chunky); }
+  if(it.cat==="glasses") set("xG",it.gstyle||"half");
+  if(it.cat==="acc"){ set("xType",it.accType||(it.scarf?"scarf":"etc")); set("xAccent",it.accent||""); }
+  if(it.hex){ $("detSw").style.background=it.hex; $("detHex").textContent=it.hex.toUpperCase(); $("detFam").textContent=""; $("detect").hidden=false; }
 }
 function closeAdd(){ $("overlay").hidden=true; }
 $("closeAdd").addEventListener("click",closeAdd);
 $("overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closeAdd(); });
-document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("overlay").hidden) closeAdd(); ["wearOv","histOv"].forEach(id=>{$(id).hidden=true;}); });
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape") return; if(!$("overlay").hidden){ closeAdd(); return; } ["wearOv","histOv","closetOv"].forEach(id=>{$(id).hidden=true;}); });
 
 $("saveAdd").addEventListener("click",()=>{
   const cat=$("fCat").value;
@@ -719,24 +772,29 @@ $("saveAdd").addEventListener("click",()=>{
   let name=$("fName").value.trim();
   if(color==="custom"&&!photoState.hex){ toast("포인트 색은 사진이나 색 코드로 색을 먼저 정해 주세요."); return; }
   if(!name) name=(color==="custom"?(photoState.name||"포인트")+" ":color!=="none"?FAM[color].ko+" ":"")+({outer:"아우터",base:"셔츠·티",mid:"니트",pants:"바지",shoes:"신발",glasses:"안경",acc:"액세서리"}[cat]);
-  const it={id:"c_"+Date.now().toString(36), cat, name, color, custom:true, note:$("fNote").value.trim()};
-  if(photoState.hex&&cat!=="glasses") it.hex=photoState.hex;
+  const prev=editingId?wardrobe.find(i=>i.id===editingId):null;
+  const it=prev&&prev.cat===cat?{...prev}:{id:"c_"+Date.now().toString(36)};
+  if(prev&&prev.cat!==cat) it.id=prev.id;
+  Object.assign(it,{cat,name,color,note:$("fNote").value.trim()});
+  delete it.hex; if(photoState.hex&&cat!=="glasses") it.hex=photoState.hex;
   if(photoState.thumb) it.thumb=photoState.thumb;
   if(cat!=="glasses") it.form=+$("fForm").value;
   const v=id=>{const el=document.getElementById(id);return el?(el.type==="checkbox"?el.checked:el.value):null;};
-  if(cat==="outer"){ it.long=v("xLen")==="long"; it.shortOuter=!it.long; it.maxThick=v("xThick")?2:1; it.casual=it.form===0; it.short=name; }
+  if(cat==="outer"){ it.long=v("xLen")==="long"; it.shortOuter=!it.long; it.maxThick=v("xThick")?2:1; it.casual=it.form===0; it.strict=v("xStrict"); it.short=name; }
   if(cat==="base"){ it.shirt=v("xType")==="shirt"; it.tee=!it.shirt; it.blue=it.shirt&&color==="lightblue"; }
   if(cat==="mid"){ const t=v("xType"); it.thick=+v("xThick"); it.cropped=v("xCrop"); it.cashmere=v("xCash");
     it.wantsShirt=t==="wants"; it.noShirt=t==="solo"; it.sweat=t==="sweat"; it.fleece=t==="fleece"; if(it.fleece&&it.thick<2) it.thick=2; it.short=name; }
   if(cat==="pants"){ it.croppedPants=v("xLen")==="crop"; it.denim=v("xDenim"); it.dressy=v("xDress")||(it.form===3&&!it.croppedPants); if(it.denim&&it.form>1) it.form=1; }
   if(cat==="shoes"){ it.sneaker=v("xType")==="sneaker"; it.chunky=v("xChunky"); }
   if(cat==="glasses"){ it.gstyle=v("xG"); }
-  if(cat==="acc"){ const t=v("xType"); it.scarf=t==="scarf"; it.short=name; if(v("xAccent")) it.accent=v("xAccent"); }
-  custom.push(it);
+  if(cat==="acc"){ const t=v("xType"); it.accType=t; it.scarf=t==="scarf"; it.short=name; if(v("xAccent")) it.accent=v("xAccent"); else delete it.accent; }
+  if(prev){ wardrobe=wardrobe.map(i=>i.id===prev.id?it:i); if(prev.cat!==cat) for(const k in sel) if(sel[k]===prev.id) sel[k]=null; }
+  else wardrobe.push(it);
   const ok=persist();
-  rebuild(); renderMine(); render();
+  rebuild(); render(); renderMine();
   closeAdd();
-  toast(`${name}을(를) 추가했어요.${ok?"":" (저장은 안 됨)"}`);
+  toast(`${name}을(를) ${prev?"수정":"추가"}했어요.${ok?"":" (저장은 안 됨)"}`);
+  if(!$("closetOv").hidden) return;
   const el=document.getElementById("sec-"+cat); if(el) el.scrollIntoView({block:"start"});
 });
 
@@ -920,19 +978,22 @@ document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",
 ["wearOv","histOv"].forEach(id=>$(id).addEventListener("click",e=>{ if(e.target.id===id) $(id).hidden=true; }));
 
 $("bkCopy").addEventListener("click",async()=>{
-  const txt=JSON.stringify({app:"outfit-picker",v:1,custom,log:wearLog});
+  const txt=JSON.stringify({app:"outfit-picker",v:2,items:wardrobe,log:wearLog});
   try{ await navigator.clipboard.writeText(txt); toast("백업 글을 복사했어요. 메모 앱에 붙여넣어 보관하세요."); }
   catch(err){ $("bkArea").hidden=false; $("bkText").value=txt; $("bkText").select(); toast("자동 복사가 막혀서 아래 칸에 띄웠어요. 길게 눌러 복사하세요."); }
 });
 function applyBackup(d){
-  if(!d||d.app!=="outfit-picker"||!Array.isArray(d.log)||!Array.isArray(d.custom)) throw new Error("bad");
-  custom=d.custom; wearLog=d.log;
+  if(!d||d.app!=="outfit-picker"||!Array.isArray(d.log)) throw new Error("bad");
+  if(Array.isArray(d.items)) wardrobe=d.items;
+  else if(Array.isArray(d.custom)) wardrobe=[...seedCopy(),...d.custom];
+  else throw new Error("bad");
+  wearLog=d.log; sel={...EMPTY};
   persist(); saveLog(); rebuild(); renderMine(); renderHist(); render();
-  toast(`복원했어요. 기록 ${wearLog.length}일, 내 옷 ${custom.length}개.`);
+  toast(`복원했어요. 옷 ${wardrobe.length}개, 기록 ${wearLog.length}일.`);
 }
 $("bkFile").addEventListener("click",()=>{
   try{
-    const blob=new Blob([JSON.stringify({app:"outfit-picker",v:1,custom,log:wearLog},null,1)],{type:"application/json"});
+    const blob=new Blob([JSON.stringify({app:"outfit-picker",v:2,items:wardrobe,log:wearLog},null,1)],{type:"application/json"});
     const url=URL.createObjectURL(blob), a=document.createElement("a");
     a.href=url; a.download=`outfit-backup-${todayStr()}.json`; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
@@ -950,13 +1011,36 @@ $("bkInput").addEventListener("change",e=>{
 $("bkShow").addEventListener("click",()=>{ $("bkArea").hidden=!$("bkArea").hidden; $("bkText").value=""; });
 $("bkApply").addEventListener("click",()=>{
   try{
-    const d=JSON.parse($("bkText").value.trim());
-    if(!d||d.app!=="outfit-picker"||!Array.isArray(d.log)||!Array.isArray(d.custom)) throw new Error("bad");
-    custom=d.custom; wearLog=d.log;
-    persist(); saveLog(); rebuild(); renderMine(); renderHist(); render();
-    $("bkArea").hidden=true; toast(`복원했어요. 기록 ${wearLog.length}일, 내 옷 ${custom.length}개.`);
+    applyBackup(JSON.parse($("bkText").value.trim()));
+    $("bkArea").hidden=true;
   }catch(err){ toast("백업 글이 아니에요. 복사한 내용을 통째로 붙여넣어 주세요."); }
 });
+
+/* ---------- 옷장 관리 ---------- */
+const byLight=(a,b)=>lightOf(b)-lightOf(a);
+function openCloset(){ renderCloset(); $("closetOv").hidden=false; }
+function renderCloset(){
+  $("closetBody").innerHTML=CATS.map(c=>{
+    const list=wardrobe.filter(i=>i.cat===c.key).sort(byLight);
+    return `<div class="closet-group"><h4>${c.label} <span class="cnt">${list.length}</span></h4>${list.length?`<ul class="mylist">${list.map(i=>`<li>${swatch(i)}<span class="t">${esc(i.name)}</span><button type="button" class="mini" data-edit="${i.id}">수정</button><button type="button" class="del" data-del="${i.id}">삭제</button></li>`).join("")}</ul>`:'<p class="hint">없음</p>'}</div>`;
+  }).join("");
+}
+function armed(btn,label){ if(btn.dataset.armed==="1") return true; btn.dataset.armed="1"; const t=btn.textContent; btn.textContent=label||"한 번 더"; setTimeout(()=>{ if(btn.isConnected){btn.dataset.armed="";btn.textContent=t;} },2500); return false; }
+$("closetBody").addEventListener("click",e=>{
+  const ed=e.target.closest("[data-edit]"), dl=e.target.closest("[data-del]");
+  if(ed){ openAdd(ed.dataset.edit); }
+  if(dl){ if(!armed(dl)) return; const id=dl.dataset.del, it=wardrobe.find(i=>i.id===id);
+    wardrobe=wardrobe.filter(i=>i.id!==id); for(const k in sel) if(sel[k]===id) sel[k]=null;
+    persist(); rebuild(); renderCloset(); render(); toast(`${it?it.name:"옷"}을(를) 지웠어요.`); }
+});
+$("seedBtn").addEventListener("click",e=>{ if(!armed(e.currentTarget,"한 번 더 누르면 바꿔요")) return; wardrobe=seedCopy(); sel={...EMPTY}; persist(); rebuild(); renderCloset(); render(); toast("예시 옷장으로 바꿨어요."); });
+$("clearBtn").addEventListener("click",e=>{ if(!armed(e.currentTarget,"한 번 더 누르면 비워요")) return; wardrobe=[]; sel={...EMPTY}; persist(); rebuild(); renderCloset(); render(); toast("옷장을 비웠어요. [+ 새 옷 추가]로 채워 주세요."); });
+$("closetOv").addEventListener("click",e=>{ if(e.target.id==="closetOv") $("closetOv").hidden=true; });
+if(firstRun) $("onboard").hidden=false;
+$("obKeep").addEventListener("click",()=>{ $("onboard").hidden=true; try{localStorage.setItem(ONBOARD_KEY,"1");}catch(e){} });
+$("obClear").addEventListener("click",()=>{ wardrobe=[]; sel={...EMPTY}; persist(); rebuild(); render(); $("onboard").hidden=true; openCloset(); });
+// 미리보기(임베드) 화면에서는 파일 다운로드가 막혀 있어 버튼 숨김
+if(window.self!==window.top){ const b=$("bkFile"); if(b) b.hidden=true; }
 
 render();
 </script>
