@@ -251,6 +251,10 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
       <div class="photo">
         <label class="photo-btn" for="photoInput"><span style="font-size:22px">📷</span>사진 찍기<br>또는 고르기</label>
         <input id="photoInput" type="file" accept="image/*" hidden>
+        <div id="thumbRow" hidden style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <img id="thumbImg" alt="저장된 사진" style="width:72px;height:72px;border-radius:12px;object-fit:cover;border:1px solid var(--line2)">
+          <button type="button" class="del" id="thumbDel">사진 지우기</button>
+        </div>
         <canvas id="preview" hidden aria-label="사진을 누르면 그 부분의 색을 다시 읽어요"></canvas>
         <div class="detect" id="detect" hidden>
           <div class="sw"><span class="big" id="detSw"></span><span>읽은 색 <b id="detHex"></b></span></div>
@@ -749,12 +753,22 @@ function openAdd(editId){
   photoState={hex:it&&it.hex||null,thumb:it&&it.thumb||null,name:null};
   $("hexInput").value=it&&it.hex?it.hex.toUpperCase():""; $("hexPicker").value=it&&it.hex?it.hex:"#808080";
   $("preview").hidden=true; $("detect").hidden=true; $("photoInput").value="";
+  showThumb();
   $("saveHint").textContent=storageOk?"옷장은 이 기기의 브라우저에 저장돼요.":"이 화면에서는 저장이 막혀 있어, 새로고침하면 바뀐 내용이 사라져요.";
   $("fCat").value=it?it.cat:"mid";
   syncCat();
   if(it) fillForm(it);
   setTimeout(()=>$("fCat").focus(),30);
 }
+function showThumb(){
+  const on=!!photoState.thumb;
+  $("thumbRow").hidden=!on;
+  if(on) $("thumbImg").src=photoState.thumb;
+}
+$("thumbDel").addEventListener("click",()=>{
+  photoState.thumb=null; $("preview").hidden=true; $("photoInput").value=""; showThumb();
+  toast("사진을 뺐어요. 색은 그대로 두고, 저장하면 반영돼요.");
+});
 function fillForm(it){
   const set=(id,v)=>{const el=document.getElementById(id); if(!el) return; if(el.type==="checkbox") el.checked=!!v; else el.value=v;};
   if(it.cat!=="glasses") fColor.value=FAM[it.color]||it.color==="custom"?it.color:"grey";
@@ -784,7 +798,7 @@ $("saveAdd").addEventListener("click",()=>{
   if(prev&&prev.cat!==cat) it.id=prev.id;
   Object.assign(it,{cat,name,color,note:$("fNote").value.trim()});
   delete it.hex; if(photoState.hex&&cat!=="glasses") it.hex=photoState.hex;
-  if(photoState.thumb) it.thumb=photoState.thumb;
+  delete it.thumb; if(photoState.thumb) it.thumb=photoState.thumb;
   if(cat!=="glasses") it.form=+$("fForm").value;
   const v=id=>{const el=document.getElementById(id);return el?(el.type==="checkbox"?el.checked:el.value):null;};
   if(cat==="outer"){ it.long=v("xLen")==="long"; it.shortOuter=!it.long; it.maxThick=v("xThick")?2:1; it.casual=it.form===0; it.strict=v("xStrict"); it.short=name; }
@@ -879,6 +893,7 @@ $("photoInput").addEventListener("change",e=>{
     const s=Math.min(img.width,img.height);
     t.getContext("2d").drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,ts,ts);
     try{ photoState.thumb=t.toDataURL("image/jpeg",0.7); }catch(err){ photoState.thumb=null; }
+    showThumb();
     URL.revokeObjectURL(url);
   };
   img.onerror=()=>{ toast("사진을 읽지 못했어요. 다른 사진으로 해 보세요."); };
