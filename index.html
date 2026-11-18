@@ -69,6 +69,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button,input,select{font:inherit;color:inherit}
@@ -211,7 +212,7 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
         <h1>오늘의 <span>코디</span></h1>
         <p class="sub">하나 고르면 나머지를 추천해 드려요</p>
       </div>
-      <div style="display:flex;gap:6px"><button class="hbtn" type="button" data-act="closet">옷장</button><button class="hbtn" type="button" data-act="reset">초기화</button><button class="hbtn" type="button" data-act="copy">복사</button></div>
+      <div style="display:flex;gap:6px"><button class="hbtn" type="button" data-act="closet">옷장</button><button class="hbtn" type="button" data-act="reset">선택 비우기</button><button class="hbtn" type="button" data-act="copy">복사</button></div>
     </div>
     <nav class="tabs" id="tabs" aria-label="카테고리로 이동"></nav>
   </header>
@@ -296,6 +297,12 @@ textarea.bk{width:100%;min-height:90px;border:1px solid var(--line2);background:
       <span class="lbl">옷장 전체</span>
       <p class="hint">'비우기'는 옷장 아이템만 지워요. 입은 기록은 남아요. 잘못 누를까 봐 두 번 눌러야 실행돼요.</p>
       <div class="row-btns"><button class="mini" type="button" id="seedBtn">예시 옷장으로 바꾸기</button><button class="mini red" type="button" id="clearBtn">옷장 비우기</button></div>
+    </div>
+    <hr class="divider">
+    <div class="field">
+      <span class="lbl">앱 전체 초기화</span>
+      <p class="hint">옷장과 입은 기록을 모두 지우고 처음 상태(예시 옷장 + 안내)로 돌아가요. 되돌릴 수 없으니 먼저 [기록]에서 백업해 두세요.</p>
+      <div class="row-btns"><button class="mini red" type="button" id="factoryBtn">전체 초기화</button></div>
     </div>
   </div>
 </div>
@@ -729,7 +736,7 @@ $("fCat").addEventListener("change",syncCat);
 
 function renderMine(){ if(!$("closetOv").hidden) renderCloset(); }
 function persist(){
-  try{ localStorage.setItem(ITEMS_KEY,JSON.stringify(wardrobe)); localStorage.setItem(ONBOARD_KEY,"1"); return true; }catch(e){ return false; }
+  try{ localStorage.setItem(ITEMS_KEY,JSON.stringify(wardrobe)); return true; }catch(e){ return false; }
 }
 let editingId=null;
 function openAdd(editId){
@@ -1033,12 +1040,25 @@ $("closetBody").addEventListener("click",e=>{
     wardrobe=wardrobe.filter(i=>i.id!==id); for(const k in sel) if(sel[k]===id) sel[k]=null;
     persist(); rebuild(); renderCloset(); render(); toast(`${it?it.name:"옷"}을(를) 지웠어요.`); }
 });
-$("seedBtn").addEventListener("click",e=>{ if(!armed(e.currentTarget,"한 번 더 누르면 바꿔요")) return; wardrobe=seedCopy(); sel={...EMPTY}; persist(); rebuild(); renderCloset(); render(); toast("예시 옷장으로 바꿨어요."); });
+$("seedBtn").addEventListener("click",e=>{ if(!armed(e.currentTarget,"한 번 더 누르면 바꿔요")) return; wardrobe=seedCopy(); sel={...EMPTY}; persist(); showOnboard(true); rebuild(); renderCloset(); render(); toast("예시 옷장으로 바꿨어요."); });
 $("clearBtn").addEventListener("click",e=>{ if(!armed(e.currentTarget,"한 번 더 누르면 비워요")) return; wardrobe=[]; sel={...EMPTY}; persist(); rebuild(); renderCloset(); render(); toast("옷장을 비웠어요. [+ 새 옷 추가]로 채워 주세요."); });
 $("closetOv").addEventListener("click",e=>{ if(e.target.id==="closetOv") $("closetOv").hidden=true; });
-if(firstRun) $("onboard").hidden=false;
-$("obKeep").addEventListener("click",()=>{ $("onboard").hidden=true; try{localStorage.setItem(ONBOARD_KEY,"1");}catch(e){} });
-$("obClear").addEventListener("click",()=>{ wardrobe=[]; sel={...EMPTY}; persist(); rebuild(); render(); $("onboard").hidden=true; openCloset(); });
+$("factoryBtn").addEventListener("click",e=>{
+  if(!armed(e.currentTarget,"한 번 더 누르면 전부 지워져요")) return;
+  wardrobe=seedCopy(); wearLog=[]; sel={...EMPTY};
+  persist(); saveLog(); showOnboard(true); rebuild();
+  ["closetOv","histOv","wearOv"].forEach(id=>$(id).hidden=true);
+  render(); window.scrollTo(0,0); toast("처음 상태로 돌아갔어요.");
+});
+// 안내 상자: 버튼을 누르면 닫히고 기억함. 예시 옷장으로 되돌리면 다시 나타남
+function showOnboard(on){
+  $("onboard").hidden=!on;
+  try{ on?localStorage.removeItem(ONBOARD_KEY):localStorage.setItem(ONBOARD_KEY,"1"); }catch(e){}
+}
+let onboardOn=firstRun; try{ onboardOn=localStorage.getItem(ONBOARD_KEY)!=="1"; }catch(e){}
+$("onboard").hidden=!onboardOn;
+$("obKeep").addEventListener("click",()=>{ showOnboard(false); toast("예시 옷장으로 계속 쓸게요. [옷장]에서 언제든 고칠 수 있어요."); });
+$("obClear").addEventListener("click",()=>{ wardrobe=[]; sel={...EMPTY}; persist(); showOnboard(false); rebuild(); render(); openCloset(); });
 // 미리보기(임베드) 화면에서는 파일 다운로드가 막혀 있어 버튼 숨김
 if(window.self!==window.top){ const b=$("bkFile"); if(b) b.hidden=true; }
 
